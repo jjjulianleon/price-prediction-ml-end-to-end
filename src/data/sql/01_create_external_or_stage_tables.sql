@@ -1,0 +1,64 @@
+-- Base raw table for one month of Yellow Taxi data in Snowflake.
+-- The default project path now performs automatic ingestion from the official NYC TLC parquet
+-- through `python3 -m src.data.ingestion ingest` or `python3 -m src.data.ingestion bootstrap`.
+-- The commented alternatives below remain useful if the team later decides to load from an internal stage
+-- or from an already materialized raw table.
+
+CREATE OR REPLACE FILE FORMAT {{DATABASE}}.{{RAW_SCHEMA}}.NYC_TAXI_PARQUET
+    TYPE = PARQUET
+    USE_LOGICAL_TYPE = TRUE;
+
+CREATE OR REPLACE STAGE {{DATABASE}}.{{RAW_SCHEMA}}.NYC_TAXI_STAGE
+    FILE_FORMAT = {{DATABASE}}.{{RAW_SCHEMA}}.NYC_TAXI_PARQUET;
+
+CREATE OR REPLACE TABLE {{DATABASE}}.{{RAW_SCHEMA}}.YELLOW_TRIPS_DEV (
+    vendorid NUMBER,
+    tpep_pickup_datetime TIMESTAMP_NTZ,
+    tpep_dropoff_datetime TIMESTAMP_NTZ,
+    passenger_count NUMBER,
+    trip_distance FLOAT,
+    ratecodeid NUMBER,
+    store_and_fwd_flag STRING,
+    pulocationid NUMBER,
+    dolocationid NUMBER,
+    payment_type NUMBER,
+    fare_amount FLOAT,
+    extra FLOAT,
+    mta_tax FLOAT,
+    tip_amount FLOAT,
+    tolls_amount FLOAT,
+    improvement_surcharge FLOAT,
+    total_amount FLOAT,
+    congestion_surcharge FLOAT,
+    airport_fee FLOAT
+);
+--
+-- Example load for one month:
+-- COPY INTO {{DATABASE}}.{{RAW_SCHEMA}}.YELLOW_TRIPS_DEV
+-- FROM @{{DATABASE}}.{{RAW_SCHEMA}}.NYC_TAXI_STAGE/yellow_tripdata_2025-01.parquet
+-- MATCH_BY_COLUMN_NAME = CASE_INSENSITIVE;
+
+-- Alternative if data already exists in a broader RAW table:
+-- INSERT OVERWRITE INTO {{DATABASE}}.{{RAW_SCHEMA}}.YELLOW_TRIPS_DEV
+-- SELECT
+--     VendorID,
+--     tpep_pickup_datetime,
+--     tpep_dropoff_datetime,
+--     passenger_count,
+--     trip_distance,
+--     RatecodeID,
+--     store_and_fwd_flag,
+--     PULocationID,
+--     DOLocationID,
+--     payment_type,
+--     fare_amount,
+--     extra,
+--     mta_tax,
+--     tip_amount,
+--     tolls_amount,
+--     improvement_surcharge,
+--     total_amount,
+--     congestion_surcharge,
+--     airport_fee
+-- FROM {{DATABASE}}.{{RAW_SCHEMA}}.YELLOW_TRIPS
+-- WHERE CAST(tpep_pickup_datetime AS DATE) BETWEEN TO_DATE('{{DATA_START_DATE}}') AND TO_DATE('{{DATA_END_DATE}}');

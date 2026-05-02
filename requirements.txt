@@ -1,19 +1,22 @@
-# Data Manipulation & Analysis
+# Data manipulation
 pandas>=2.0.0
 numpy>=1.24.0
+scipy>=1.11.0
 
-# Machine Learning
+# Snowflake
+snowflake-connector-python[pandas]>=3.10.0
+
+# Machine learning
 scikit-learn>=1.2.2
+joblib>=1.3.0
 
-# Visualization
+# Visualization and notebooks
 matplotlib>=3.7.0
 seaborn>=0.12.2
-
-# Jupyter Notebook Environment
 jupyterlab>=3.6.0
 ipykernel>=6.20.0
 
-# API / Deployment
+# API / deployment
 fastapi>=0.95.0
 uvicorn>=0.22.0
 pydantic>=2.0.0

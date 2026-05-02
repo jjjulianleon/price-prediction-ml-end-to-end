@@ -1,109 +1,125 @@
-# Proyecto Final: Predicción de Precios (End-to-End ML con Big Data)
+# Price Prediction ML End to End
 
-Este repositorio es la plantilla oficial para el proyecto final. 
+Proyecto base para prediccion de precios de viajes NYC Yellow Taxi con enfoque Snowflake-first. El objetivo de esta fase es establecer una plataforma reproducible de ingenieria de datos y experimentacion de modelos sobre un rango de fechas controlado, evitando mover el procesamiento masivo fuera de Snowflake.
 
-> [!WARNING]
-> **Arquitectura para Grandes Volúmenes (Big Data):** 
-> Procesamiento de **~20GB** de información de viajes. Tratar de descargar toda la data e intentar usar un `train_test_split` tradicional en Pandas o Scikit-Learn saturará su memoria RAM al instante. Por tanto, el corazón de la limpieza estructurada, el ensamble de la OBT y la división Train/Test **se ejecutará del lado de Snowflake mediante SQL**. 
+## Objetivo del proyecto
 
-El proyecto está segmentado de la siguiente manera para su evaluación:
+El repositorio organiza el flujo inicial para:
 
-*   **PSet #4**: Investigación técnica. Creación del documento técnico (monografía) y exposición sobre el algoritmo de Boosting que se le asignó a su equipo. Algoritmos en paralelo.
-*   **Proyecto Final (PSet #5)**: Implementación, experimentación y despliegue del modelo punto a punto.
+- cargar un subconjunto controlado de viajes Yellow Taxi en Snowflake
+- construir una OBT de modelado con reglas de limpieza y control de leakage
+- materializar conjuntos `train`, `validation` y `test` con logica temporal
+- explorar datos mediante muestras
+- entrenar y comparar modelos iniciales de regresion
 
----
+En esta etapa el foco esta en la **experimentacion**. Las decisiones de API, frontend y serving se postergan hasta validar la estrategia de modelado.
 
-## Objetivo General del Proyecto Final
+## Alcance de la fase actual
 
-Deberán conectarse a **Snowflake** para consumir la One Big Table (`analytics.obt_trips`), empujando el cómputo primario a la base de datos (Pushdown Computation), realizar el proceso de de exploración en muestras, estructurar el modelado (*Out-of-Core Training* o por *Lotes*), empaquetarlo en código productivo modular Python y servirlo mediante una API base con FastAPI.
+- servicio inicial: `Yellow Taxi`
+- target inicial: `fare_amount`
+- rango de datos configurable por fechas en `.env`
+- OBT y splits construidos en Snowflake
+- entrenamiento local solo con muestras o batches
 
----
+## Arquitectura de trabajo
 
-## Flujo de Trabajo
+1. Snowflake centraliza la carga dev, limpieza estructural, OBT y particiones temporales.
+2. Los notebooks se usan para EDA y validacion en muestras, no para procesar la base completa.
+3. Los scripts en `src/` encapsulan configuracion, acceso a Snowflake, transformaciones y entrenamiento.
+4. Los tests validan contratos de codigo y supuestos del pipeline, pero no reemplazan la ejecucion de la data real en Snowflake.
 
-### 1. Modelado de Datos
-En la subcarpeta `src/data/sql/` estructurarán la lógica de cruce masivo.
-1. Script para materializar la OBT unificada.
-2. Script para separar los datos (`train_set` 2015-2023, `val_set` 2024, `test_set` 2025).
+## Dataset de modelado
 
-### 2. Preparación y Exploración
-No carguen toda la base. Usen directivas SQL como `SAMPLE` o `LIMIT` mientras evalúan.
-1.  **`01_eda.ipynb`**: Realicen Análisis Exploratorio en un **sample**. Identifiquen outliers y Data Leakage.
-2.  **`02_data_cleaning.ipynb`**: Validen reglas lógicas en pandas y **traspasen su código estructural a sus queries SQL** en la DB.
-3.  **`03_feature_engineering.ipynb`**: Creen variables complejas espacio-temporales.
+La tabla de modelado `ANALYTICS.OBT_TRIPS_DEV` conserva solo variables seguras para prediccion pre-viaje:
 
-### 3. Experimentación (Out-of-Core)
-**`04_model_experimentation.ipynb`**: Entrenen modelos. Para ensambles y boostings, investiguen sobre la iteración por lotes (`batch training`, iteradores en XGBoost/LightGBM) o tomen la mayor submuestra representativa que soporte la memoria de sus máquinas. Seleccionen el mejor según RMSE.
+- `pickup_datetime`
+- `pickup_hour`
+- `pickup_dayofweek`
+- `pickup_month`
+- `is_weekend`
+- `passenger_count`
+- `trip_distance`
+- `pickup_location_id`
+- `dropoff_location_id`
+- `vendor_id`
+- `ratecode_id`
+- `fare_amount` como target
 
-### 4. Refactorización de Produccion
-Migrar el Jupyter a los scripts definitivos en `src/`.
-1.  Copiar la lógica de recolección de *chunks* a `src/data/ingestion.py`.
-2.  Pipeline definitivo en `src/features/`.
-3.  Lógica de `partial_fit` / batch en `src/models/train_model.py`.
+Se excluyen del contrato de features variables que introducen leakage o dependen del cierre del viaje, por ejemplo `payment_type`, `tip_amount`, `tolls_amount`, `mta_tax`, `airport_fee`, `total_amount` y derivadas post-viaje.
 
-### 5. API y Front End
-El producto no es un Jupyter, es un software que usará un usuario final interactivo.
-1. **Back-end de ML**: Levantar la aplicación web que envuelve al `.pkl` ejecutando:  
-   `uvicorn src.api.main:app --reload`
-2. **Interfaz de Usuario**: Desarrollar en `app/frontend.py` la interfaz gráfica usando **Streamlit**. El usuario final introducirá datos básicos del viaje y este conectará a la API.  
-   Para correr el servidor web, asegúrese de estar en la raíz de su terminal y ejecutar:
-   `streamlit run app/frontend.py`
+## Modelos incluidos en la base experimental
 
----
+- `DummyRegressor` como baseline
+- `SGDRegressor` para entrenamiento incremental por lotes
+- `HistGradientBoostingRegressor` sobre muestra controlada
 
-## Estructura
+Los modelos boosting adicionales requeridos por el proyecto quedan pendientes para la fase comparativa.
+
+## Estructura principal
 
 ```text
-├── data/               # Archivos prohibidos en Git (.gitignore) y modelos (.pkl)
-├── notebooks/          # Exploración interactivo (usar MUESTRAS)
+├── data/
+│   ├── models/
+│   ├── interim/
+│   ├── processed/
+│   └── raw/
+├── notebooks/
 │   ├── 01_eda.ipynb
 │   ├── 02_data_cleaning.ipynb
 │   ├── 03_feature_engineering.ipynb
 │   └── 04_model_experimentation.ipynb
-├── src/                # Código fuente de Producción
-│   ├── data/           
-│   │   ├── sql/        # Scripts SQL obligatorios para la DB (Pushdown)
-│   │   └── ingestion.py # Iterador de descargas
-│   ├── features/       # Transformadores sklearn
-│   ├── models/         # Entrenamiento modular y por batch
-│   ├── api/            # API del modelo (FastAPI)
-│   └── utils/          
-├── app/                # Carpeta para el Frontend final
-│   └── frontend.py     # Aplicación interactiva en Streamlit
-├── tests/              # Pruebas unitarias
-├── .env.example        
-├── requirements.txt    
-└── README.md           
+├── src/
+│   ├── data/sql/
+│   ├── data/ingestion.py
+│   ├── features/
+│   ├── models/
+│   └── utils/
+├── tests/
+├── .env.example
+├── RUNBOOK.md
+├── ENUNCIADO.md
+└── README.md
 ```
 
----
+## Configuracion
 
-## Rúbrica de Evaluación
+La plantilla de entorno esta en [.env.example](/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.env.example:1). Las variables mas importantes son:
 
-### **PSet #4: Investigación Técnica (100 Puntos Totales)**
-Focalizado puramente en la curva teórica y estudio en profundidad del ecosistema de Boosting.
+- `SNOWFLAKE_ACCOUNT`
+- `SNOWFLAKE_USER`
+- `SNOWFLAKE_PASSWORD`
+- `SNOWFLAKE_ROLE`
+- `SNOWFLAKE_WAREHOUSE`
+- `SNOWFLAKE_DATABASE`
+- `SNOWFLAKE_SCHEMA_RAW`
+- `SNOWFLAKE_SCHEMA_ANALYTICS`
+- `SNOWFLAKE_SCHEMA_ML`
+- `DATA_START_DATE`
+- `DATA_END_DATE`
+- `TRAIN_END_DATE`
+- `VAL_END_DATE`
+- `MODEL_DIR`
 
-| Criterio | Puntaje | Descripción |
-| :------- | :---: | :---------- |
-| **Documento Técnico (PDF)** | **50 pts** | Formulación matemática, seudocódigo del algoritmo, manejo de categóricas/nulos nativos, parámetros clave de regularización, pitfalls e impacto de `learning_rate` vs `n_estimators`. Extensión ~4-6 hojas. |
-| **Presentación y Defensa** | **50 pts** | Claridad en la exposición grupal, respuestas precisas a la audiencia y capacidad analítica frente al por qué usar su boosting frente a un simple Random Forest. |
+Aunque la configuracion actual esta pensada para un solo mes, el diseño ya queda preparado para ampliar el rango de fechas sin reescribir el pipeline.
 
-### **Proyecto Final: Implementación y Productivización (100 Puntos Totales)**
-El cierre del curso. Evalúa la capacidad técnica end-to-end simulando la realidad de MLOps.
+## Ejecucion
 
-| Etapa del Desarrollo (Parte Técnica - 70 Puntos) | Puntaje | Descripción |
-| :------- | :---: | :---------- |
-| **Data Engineering (SQL)** | 15 pts | Correcta construcción de la OBT en Snowflake, filtros limpios y *Time-Based splits* construidos del lado de la base de datos (0 Leakage). |
-| **Experimentación y Ensambles** | 25 pts | Construcción estricta de Voting/Bagging/Pasting, y tuning *Out-of-Core* o en lotes de todos los Boostings (`AdaBoost`, `GradientBoosting`, `XGBoost`, `LightGBM`, `CatBoost`). |
-| **Métricas Obtenidas** | 15 pts | Evaluación basada en el RMSE del Test Set. Se otorga puntaje completo a quienes superen la regresión baseline y alcancen el P90 de la clase. |
-| **Software y Despliegue** | 15 pts | Código 100% modular en `src/`, FastAPI activa devolviendo predicciones correctas y Frontend de Streamlit amigable consumiendo a la API sin fallos de interfaz. |
+La guia operativa completa, orden de ejecucion y expectativas de salida estan en [RUNBOOK.md](/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/RUNBOOK.md:1).
 
-| Defensa Final (30 Puntos) | Puntaje | Descripción |
-| :------- | :---: | :---------- |
-| **Validación de Conceptos** | 30 pts | Los alumnos pueden explicar todo el proyecto |
+Comando recomendado para la fase base:
 
-> [!CAUTION]
-> **Penalizaciones Críticas del Proyecto Final**
-> - **Data Leakage**: Incluir variables exclusivas del cierre del viaje en el input o usar test para tunear o elegir el modelo. (-50 pts y RMSE invalidado)
-> - **No Usar Muestras/Lotes**: Tratar de descargar los 20GB en un DF local de Pandas causando saturación (-50 pts).
-> - **Faltante de Algoritmos**: No incluir alguno de los Boostings obligatorios (-10 pts por modelo faltante).
+```bash
+python3 -m src.data.ingestion bootstrap
+```
+
+Ese comando prepara la estructura en Snowflake, ingiere automaticamente el parquet mensual oficial de NYC TLC hacia `RAW.YELLOW_TRIPS_DEV` y luego materializa OBT y splits.
+La ruta principal de carga usa `PUT` a un stage interno y `COPY INTO` directo en Snowflake.
+
+## Estado de pruebas
+
+Los tests del repositorio validan codigo y contratos del pipeline. No ejecutan por si solos la carga real en Snowflake ni reemplazan la corrida operativa del flujo. Primero debe existir la data dev en Snowflake; despues se ejecutan notebooks y entrenamiento experimental.
+
+## Referencia academica
+
+El enunciado original del proyecto se conserva en [ENUNCIADO.md](/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/ENUNCIADO.md:1).

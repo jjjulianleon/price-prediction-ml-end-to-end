@@ -1,0 +1,4 @@
+-- Create logical schemas used in the base phase of the final project.
+CREATE SCHEMA IF NOT EXISTS {{DATABASE}}.{{RAW_SCHEMA}};
+CREATE SCHEMA IF NOT EXISTS {{DATABASE}}.{{ANALYTICS_SCHEMA}};
+CREATE SCHEMA IF NOT EXISTS {{DATABASE}}.{{ML_SCHEMA}};
