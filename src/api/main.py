@@ -33,7 +33,7 @@ class TripInput(BaseModel):
     pickup_location_id: int = Field(..., ge=1, le=265, example=237)
     dropoff_location_id: int = Field(..., ge=1, le=265, example=141)
     passenger_count: int = Field(..., ge=1, le=8, example=2)
-    trip_distance: float = Field(..., ge=0.0, example=7.8)
+    estimated_distance: float = Field(..., ge=0.0, example=7.8)
     vendor_id: int = Field(..., ge=1, le=2, example=1)
     ratecode_id: int = Field(..., ge=1, le=6, example=1)
 
@@ -44,7 +44,7 @@ class TripInput(BaseModel):
                 "pickup_location_id": 237,
                 "dropoff_location_id": 141,
                 "passenger_count": 2,
-                "trip_distance": 7.8,
+                "estimated_distance": 7.8,
                 "vendor_id": 1,
                 "ratecode_id": 1,
             }

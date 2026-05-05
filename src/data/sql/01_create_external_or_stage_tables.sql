@@ -1,6 +1,6 @@
 -- Base raw table for one month of Yellow Taxi data in Snowflake.
 -- The default project path now performs automatic ingestion from the official NYC TLC parquet
--- through `python3 -m src.data.ingestion ingest` or `python3 -m src.data.ingestion bootstrap`.
+-- through `python3 -m src.data.ingestion ingest` or `python3 -m src.data.ingestion bootstrap_raw`.
 -- The commented alternatives below remain useful if the team later decides to load from an internal stage
 -- or from an already materialized raw table.
 
@@ -11,7 +11,7 @@ CREATE OR REPLACE FILE FORMAT {{DATABASE}}.{{RAW_SCHEMA}}.NYC_TAXI_PARQUET
 CREATE OR REPLACE STAGE {{DATABASE}}.{{RAW_SCHEMA}}.NYC_TAXI_STAGE
     FILE_FORMAT = {{DATABASE}}.{{RAW_SCHEMA}}.NYC_TAXI_PARQUET;
 
-CREATE OR REPLACE TABLE {{DATABASE}}.{{RAW_SCHEMA}}.YELLOW_TRIPS_DEV (
+CREATE TABLE IF NOT EXISTS {{DATABASE}}.{{RAW_SCHEMA}}.YELLOW_TRIPS_DEV (
     vendorid NUMBER,
     tpep_pickup_datetime TIMESTAMP_NTZ,
     tpep_dropoff_datetime TIMESTAMP_NTZ,
@@ -31,6 +31,25 @@ CREATE OR REPLACE TABLE {{DATABASE}}.{{RAW_SCHEMA}}.YELLOW_TRIPS_DEV (
     total_amount FLOAT,
     congestion_surcharge FLOAT,
     airport_fee FLOAT
+);
+
+CREATE TABLE IF NOT EXISTS {{DATABASE}}.{{RAW_SCHEMA}}.RAW_LOAD_AUDIT (
+    file_name STRING,
+    trip_type STRING,
+    period_label STRING,
+    local_path STRING,
+    copy_status STRING,
+    rows_loaded NUMBER,
+    loaded_at TIMESTAMP_NTZ,
+    PRIMARY KEY (file_name)
+);
+
+CREATE TABLE IF NOT EXISTS {{DATABASE}}.{{STAGING_SCHEMA}}.TAXI_ZONE_LOOKUP (
+    location_id NUMBER,
+    borough STRING,
+    zone STRING,
+    service_zone STRING,
+    is_airport NUMBER
 );
 --
 -- Example load for one month:

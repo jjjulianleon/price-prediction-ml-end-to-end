@@ -5,8 +5,7 @@ from __future__ import annotations
 import argparse
 import io
 import logging
-import tempfile
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from typing import Iterator, Sequence
 from urllib.request import urlretrieve
@@ -130,10 +129,12 @@ def fetch_sample(
     query: str,
     sample_pct: float | None = None,
     limit: int = 5_000,
+    sample_seed: int | None = None,
     settings: Settings | None = None,
 ) -> pd.DataFrame:
     wrapped_query = query.strip().rstrip(";")
-    sample_clause = f" SAMPLE ({sample_pct})" if sample_pct is not None else ""
+    seed_clause = f" SEED ({sample_seed})" if sample_pct is not None and sample_seed is not None else ""
+    sample_clause = f" SAMPLE ({sample_pct}){seed_clause}" if sample_pct is not None else ""
     sample_query = f"SELECT * FROM ({wrapped_query}) AS base{sample_clause} LIMIT {limit}"
     batches = list(fetch_data_in_batches(sample_query, batch_size=limit, settings=settings))
     if not batches:
@@ -180,6 +181,16 @@ def fetch_scalar(query: str, settings: Settings | None = None) -> int:
         close_quietly(connection)
 
 
+def fetch_exists(query: str, settings: Settings | None = None) -> bool:
+    connection = create_connection(settings=settings)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute(query)
+            return cursor.fetchone() is not None
+    finally:
+        close_quietly(connection)
+
+
 def object_exists(object_name: str, object_type: str, settings: Settings | None = None) -> bool:
     location = ".".join(object_name.split(".")[:-1])
     name = object_name.split(".")[-1]
@@ -197,6 +208,7 @@ def log_transform_summary(settings: Settings) -> None:
     LOGGER.info("Transform summary for window=%s", settings.processing_window_label)
     objects = [
         ("raw_rows", settings.raw_table, "TABLES"),
+        ("staging_rows", settings.staging_table, "TABLES"),
         ("obt_rows", settings.obt_table, "TABLES"),
         ("train_rows", settings.train_table, "VIEWS"),
         ("val_rows", settings.val_table, "VIEWS"),
@@ -323,37 +335,117 @@ def log_problem_samples(settings: Settings) -> None:
         LOGGER.exception("Failed to fetch invalid sample rows for OBT diagnostics")
 
 
-def month_file_name(settings: Settings) -> str:
-    start_dt = datetime.fromisoformat(settings.data_start_date)
-    end_dt = datetime.fromisoformat(settings.data_end_date)
-    if start_dt.year != end_dt.year or start_dt.month != end_dt.month:
-        raise ValueError(
-            "Automatic TLC ingestion currently supports a single monthly parquet per run. "
-            "Set DATA_START_DATE and DATA_END_DATE within the same month."
-        )
-    return f"yellow_tripdata_{start_dt.year:04d}-{start_dt.month:02d}.parquet"
+def iter_month_starts(settings: Settings) -> list[date]:
+    start_dt = date.fromisoformat(settings.data_start_date).replace(day=1)
+    end_dt = date.fromisoformat(settings.data_end_date).replace(day=1)
+    month_starts: list[date] = []
+    current = start_dt
+    while current <= end_dt:
+        month_starts.append(current)
+        if current.month == 12:
+            current = current.replace(year=current.year + 1, month=1)
+        else:
+            current = current.replace(month=current.month + 1)
+    return month_starts
 
 
-def month_file_url(settings: Settings) -> str:
-    return f"{settings.nyc_tlc_base_url.rstrip('/')}/{month_file_name(settings)}"
+def month_file_name(month_start: date) -> str:
+    return f"yellow_tripdata_{month_start.year:04d}-{month_start.month:02d}.parquet"
 
 
-def download_tlc_month_file(settings: Settings) -> Path:
-    url = month_file_url(settings)
-    target_dir = Path(tempfile.mkdtemp(prefix="nyc_taxi_ingest_"))
-    destination = target_dir / month_file_name(settings)
-    LOGGER.info("Downloading NYC TLC parquet | url=%s", url)
-    urlretrieve(url, destination)
-    LOGGER.info("Downloaded parquet to %s", destination)
-    return destination
+def month_file_url(settings: Settings, month_start: date) -> str:
+    return f"{settings.nyc_tlc_base_url.rstrip('/')}/{month_file_name(month_start)}"
 
 
-def truncate_raw_dev_table(settings: Settings) -> None:
-    LOGGER.info("Truncating raw dev table: %s", settings.raw_table)
-    execute_sql(f"TRUNCATE TABLE {settings.raw_table}", settings=settings)
+def download_tlc_month_files(settings: Settings) -> list[Path]:
+    target_dir = settings.local_data_dir / settings.trip_type
+    target_dir.mkdir(parents=True, exist_ok=True)
+    downloaded_files: list[Path] = []
+
+    for month_start in iter_month_starts(settings):
+        file_name = month_file_name(month_start)
+        destination = target_dir / file_name
+        if destination.exists():
+            LOGGER.info("Skipping download; parquet already exists | path=%s", destination)
+            downloaded_files.append(destination)
+            continue
+        if not settings.enable_download:
+            raise FileNotFoundError(
+                f"Download disabled and parquet missing locally: {destination}"
+            )
+        url = month_file_url(settings, month_start)
+        LOGGER.info("Downloading NYC TLC parquet | url=%s", url)
+        urlretrieve(url, destination)
+        LOGGER.info("Downloaded parquet to %s", destination)
+        downloaded_files.append(destination)
+
+    return downloaded_files
+
+
+def file_already_loaded(file_name: str, settings: Settings) -> bool:
+    query = f"""
+    SELECT 1
+    FROM {settings.raw_load_audit_table}
+    WHERE file_name = '{file_name}'
+      AND copy_status = 'COPIED'
+    LIMIT 1
+    """
+    return fetch_exists(query, settings=settings)
+
+
+def log_load_audit(
+    file_name: str,
+    local_path: Path,
+    settings: Settings,
+    copy_status: str,
+    rows_loaded: int,
+) -> None:
+    month_label = file_name.replace("yellow_tripdata_", "").replace(".parquet", "")
+    query = f"""
+    MERGE INTO {settings.raw_load_audit_table} AS target
+    USING (
+        SELECT
+            '{file_name}' AS file_name,
+            '{settings.trip_type}' AS trip_type,
+            '{month_label}' AS period_label,
+            '{str(local_path)}' AS local_path,
+            '{copy_status}' AS copy_status,
+            {rows_loaded} AS rows_loaded,
+            CURRENT_TIMESTAMP() AS loaded_at
+    ) AS source
+    ON target.file_name = source.file_name
+    WHEN MATCHED THEN UPDATE SET
+        trip_type = source.trip_type,
+        period_label = source.period_label,
+        local_path = source.local_path,
+        copy_status = source.copy_status,
+        rows_loaded = source.rows_loaded,
+        loaded_at = source.loaded_at
+    WHEN NOT MATCHED THEN INSERT (
+        file_name,
+        trip_type,
+        period_label,
+        local_path,
+        copy_status,
+        rows_loaded,
+        loaded_at
+    ) VALUES (
+        source.file_name,
+        source.trip_type,
+        source.period_label,
+        source.local_path,
+        source.copy_status,
+        source.rows_loaded,
+        source.loaded_at
+    )
+    """
+    execute_sql(query, settings=settings)
 
 
 def put_file_to_stage(local_path: Path, settings: Settings) -> None:
+    if not settings.enable_stage_upload:
+        LOGGER.info("Skipping PUT because ENABLE_STAGE_UPLOAD=false | path=%s", local_path)
+        return
     connection = create_connection(settings=settings)
     try:
         with connection.cursor() as cursor:
@@ -370,6 +462,9 @@ def put_file_to_stage(local_path: Path, settings: Settings) -> None:
 
 
 def copy_stage_to_raw(settings: Settings, file_name: str) -> None:
+    if not settings.enable_copy_into:
+        LOGGER.info("Skipping COPY INTO because ENABLE_COPY_INTO=false | file=%s", file_name)
+        return
     copy_sql = f"""
     COPY INTO {settings.raw_table}
     FROM @{settings.raw_stage}/{file_name}
@@ -396,6 +491,8 @@ def copy_stage_to_raw(settings: Settings, file_name: str) -> None:
 
 
 def remove_stage_file(settings: Settings, file_name: str) -> None:
+    if not settings.enable_stage_upload:
+        return
     connection = create_connection(settings=settings)
     try:
         with connection.cursor() as cursor:
@@ -404,41 +501,118 @@ def remove_stage_file(settings: Settings, file_name: str) -> None:
         close_quietly(connection)
 
 
-def ingest_tlc_month(settings: Settings | None = None, overwrite: bool = True) -> None:
+def ingest_tlc_period(settings: Settings | None = None, overwrite: bool = True) -> None:
     effective_settings = settings or get_settings()
-    parquet_path = download_tlc_month_file(effective_settings)
-    file_name = parquet_path.name
+    parquet_paths = download_tlc_month_files(effective_settings)
+    file_names = [path.name for path in parquet_paths]
     try:
-        if overwrite:
-            truncate_raw_dev_table(effective_settings)
-        put_file_to_stage(parquet_path, effective_settings)
-        copy_stage_to_raw(effective_settings, file_name)
-        raw_count = fetch_scalar(f"SELECT COUNT(*) FROM {effective_settings.raw_table}", settings=effective_settings)
+        for parquet_path in parquet_paths:
+            if file_already_loaded(parquet_path.name, effective_settings) and not overwrite:
+                LOGGER.info(
+                    "Skipping Snowflake load; parquet already audited as copied | file=%s",
+                    parquet_path.name,
+                )
+                continue
+            put_file_to_stage(parquet_path, effective_settings)
+            copy_stage_to_raw(effective_settings, parquet_path.name)
+            log_load_audit(
+                parquet_path.name,
+                parquet_path,
+                effective_settings,
+                "COPIED" if effective_settings.enable_copy_into else "STAGED_ONLY",
+                0,
+            )
+        raw_count = fetch_scalar(
+            f"SELECT COUNT(*) FROM {effective_settings.raw_table}",
+            settings=effective_settings,
+        )
         LOGGER.info(
-            "Completed automatic TLC ingestion | raw_table=%s | total_rows=%s | month=%s",
+            "Completed automatic TLC ingestion | raw_table=%s | total_rows=%s | files=%s | window=%s",
             effective_settings.raw_table,
             raw_count,
+            len(file_names),
             effective_settings.processing_window_label,
         )
     except Exception:
         LOGGER.exception(
-            "Automatic TLC ingestion failed | raw_table=%s | month=%s",
+            "Automatic TLC ingestion failed | raw_table=%s | window=%s",
             effective_settings.raw_table,
             effective_settings.processing_window_label,
         )
         raise
     finally:
-        try:
-            remove_stage_file(effective_settings, file_name)
-        except Exception:
-            LOGGER.warning("Could not clean staged file %s", file_name)
+        for file_name in file_names:
+            try:
+                remove_stage_file(effective_settings, file_name)
+            except Exception:
+                LOGGER.warning("Could not clean staged file %s", file_name)
+
+
+def ingest_tlc_month(settings: Settings | None = None, overwrite: bool = True) -> None:
+    ingest_tlc_period(settings=settings, overwrite=overwrite)
+
+
+def bootstrap_raw(settings: Settings | None = None) -> None:
+    effective_settings = settings or get_settings()
+    execute_sql_group("setup", settings=effective_settings)
+    ingest_tlc_period(settings=effective_settings, overwrite=False)
+
+
+def transform_model_data(settings: Settings | None = None) -> None:
+    effective_settings = settings or get_settings()
+    execute_sql_group("transform", settings=effective_settings)
+
+
+def bootstrap_full(settings: Settings | None = None) -> None:
+    effective_settings = settings or get_settings()
+    bootstrap_raw(settings=effective_settings)
+    transform_model_data(settings=effective_settings)
 
 
 def bootstrap(settings: Settings | None = None) -> None:
+    bootstrap_raw(settings=settings)
+
+
+def preview_raw_sample(settings: Settings | None = None) -> None:
     effective_settings = settings or get_settings()
-    execute_sql_group("setup", settings=effective_settings)
-    ingest_tlc_month(settings=effective_settings, overwrite=True)
-    execute_sql_group("transform", settings=effective_settings)
+    sample_df = fetch_sample(
+        f"SELECT * FROM {effective_settings.raw_table}",
+        sample_pct=1.0,
+        limit=effective_settings.eda_sample_limit,
+        sample_seed=effective_settings.eda_sample_seed,
+        settings=effective_settings,
+    )
+    LOGGER.info(
+        "RAW sample preview for EDA | table=%s | rows=%s | columns=%s",
+        effective_settings.raw_table,
+        len(sample_df),
+        list(sample_df.columns),
+    )
+    if not sample_df.empty:
+        LOGGER.info("RAW sample head:\n%s", sample_df.head(10).to_string(index=False))
+
+
+def preview_obt_sample(settings: Settings | None = None) -> None:
+    effective_settings = settings or get_settings()
+    sample_df = fetch_sample(
+        f"SELECT * FROM {effective_settings.obt_table}",
+        sample_pct=effective_settings.train_sample_pct,
+        limit=effective_settings.eda_sample_limit,
+        sample_seed=effective_settings.eda_sample_seed,
+        settings=effective_settings,
+    )
+    LOGGER.info(
+        "OBT sample preview | table=%s | rows=%s | columns=%s",
+        effective_settings.obt_table,
+        len(sample_df),
+        list(sample_df.columns),
+    )
+    if not sample_df.empty:
+        LOGGER.info("OBT sample head:\n%s", sample_df.head(10).to_string(index=False))
+
+
+def preview_eda_sample(settings: Settings | None = None) -> None:
+    preview_raw_sample(settings=settings)
 
 
 def main() -> None:
@@ -448,19 +622,46 @@ def main() -> None:
         "command",
         nargs="?",
         default="bootstrap",
-        choices=["setup", "ingest", "transform", "all", "bootstrap"],
+        choices=[
+            "setup",
+            "ingest",
+            "transform",
+            "all",
+            "bootstrap",
+            "bootstrap_raw",
+            "bootstrap_full",
+            "sample",
+            "sample_raw",
+            "sample_obt",
+            "sql_all",
+        ],
         help="Workflow command to execute.",
     )
     args = parser.parse_args()
 
-    if args.command in {"setup", "transform", "all"}:
-        execute_sql_group(args.command)
+    if args.command == "setup":
+        execute_sql_group("setup")
+        return
+    if args.command == "transform":
+        transform_model_data()
+        return
+    if args.command == "sql_all":
+        execute_sql_group("all")
         return
     if args.command == "ingest":
-        ingest_tlc_month()
+        ingest_tlc_period()
         return
-    if args.command == "bootstrap":
-        bootstrap()
+    if args.command in {"bootstrap", "bootstrap_raw"}:
+        bootstrap_raw()
+        return
+    if args.command in {"bootstrap_full", "all"}:
+        bootstrap_full()
+        return
+    if args.command in {"sample", "sample_raw"}:
+        preview_raw_sample()
+        return
+    if args.command == "sample_obt":
+        preview_obt_sample()
         return
 
 

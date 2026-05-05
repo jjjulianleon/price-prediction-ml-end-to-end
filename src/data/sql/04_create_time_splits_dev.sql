@@ -1,10 +1,10 @@
 -- Temporal splits for the base phase using date boundaries from the environment.
--- Current .env should still point to a single month, but the SQL is already range-based.
--- Example dev month:
+-- Current recommended base window: 6 months with monthly split boundaries.
+-- Example base window:
 --   DATA_START_DATE = 2025-01-01
---   TRAIN_END_DATE = 2025-01-21
---   VAL_END_DATE   = 2025-01-27
---   DATA_END_DATE  = 2025-01-31
+--   TRAIN_END_DATE = 2025-04-30
+--   VAL_END_DATE   = 2025-05-31
+--   DATA_END_DATE  = 2025-06-30
 
 CREATE OR REPLACE VIEW {{DATABASE}}.{{ML_SCHEMA}}.TRAIN_SET_DEV AS
 SELECT *
