@@ -1,19 +1,18 @@
-"""Training entrypoint for baseline and incremental NYC Taxi fare models."""
+"""Training entrypoint — compares all models from MODEL_ZOO via Snowflake."""
 
 from __future__ import annotations
 
+import math
 from pathlib import Path
 
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.dummy import DummyRegressor
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.linear_model import SGDRegressor
 from sklearn.metrics import mean_squared_error
 
 from src.data.ingestion import fetch_data_in_batches, fetch_sample
 from src.features.build_features import TARGET_COLUMN, get_feature_pipeline, split_features_target
+from src.models.model_zoo import MODEL_ZOO
 from src.utils.config import Settings, ensure_model_dir, get_settings
 
 
@@ -24,58 +23,25 @@ def fit_preprocessor_from_sample(sample_df: pd.DataFrame):
     return pipeline
 
 
-def train_dummy_regressor(sample_df: pd.DataFrame):
-    X_sample, y_sample = split_features_target(sample_df)
-    preprocessor = get_feature_pipeline()
-    X_transformed = preprocessor.fit_transform(X_sample)
-    model = DummyRegressor(strategy="mean")
-    model.fit(X_transformed, y_sample)
-    return preprocessor, model
-
-
-def train_incremental_model(
+def train_incremental_snowflake(
     train_query: str,
     preprocessor,
+    estimator,
     batch_size: int = 50_000,
     settings: Settings | None = None,
-) -> SGDRegressor:
-    model = SGDRegressor(
-        loss="squared_error",
-        penalty="l2",
-        alpha=0.0001,
-        learning_rate="invscaling",
-        eta0=0.01,
-        random_state=42,
-    )
-
+):
     seen_rows = 0
     for batch_df in fetch_data_in_batches(train_query, batch_size=batch_size, settings=settings):
         if batch_df.empty:
             continue
-
         X_batch, y_batch = split_features_target(batch_df)
         X_transformed = preprocessor.transform(X_batch)
-        model.partial_fit(X_transformed, y_batch)
+        estimator.partial_fit(X_transformed, y_batch)
         seen_rows += len(batch_df)
 
     if seen_rows == 0:
         raise ValueError("Training query returned no rows.")
-    return model
-
-
-def train_hist_gradient_boosting(sample_df: pd.DataFrame):
-    X_sample, y_sample = split_features_target(sample_df)
-    preprocessor = get_feature_pipeline()
-    X_transformed = preprocessor.fit_transform(X_sample, y_sample)
-    model = HistGradientBoostingRegressor(
-        learning_rate=0.05,
-        max_depth=6,
-        max_iter=150,
-        min_samples_leaf=50,
-        random_state=42,
-    )
-    model.fit(X_transformed, y_sample)
-    return preprocessor, model
+    return estimator
 
 
 def evaluate_model(
@@ -91,7 +57,6 @@ def evaluate_model(
     for batch_df in fetch_data_in_batches(query, batch_size=batch_size, settings=settings):
         if batch_df.empty:
             continue
-
         X_batch, y_batch = split_features_target(batch_df)
         X_transformed = preprocessor.transform(X_batch)
         predictions = model.predict(X_transformed)
@@ -106,14 +71,25 @@ def evaluate_model(
     return float(np.sqrt(mean_squared_error(y_true, y_pred)))
 
 
-def save_artifact(model, preprocessor, metrics: dict[str, float], output_path: str | Path) -> Path:
+def save_artifact(
+    model,
+    preprocessor,
+    model_name: str,
+    metrics: dict,
+    all_models_metrics: dict,
+    output_path: str | Path,
+) -> Path:
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     artifact = {
         "model": model,
         "preprocessor": preprocessor,
         "target_column": TARGET_COLUMN,
-        "metrics": metrics,
+        "model_name": model_name,
+        "metrics": {
+            **metrics,
+            "all_models": all_models_metrics,
+        },
     }
     joblib.dump(artifact, path)
     return path
@@ -132,63 +108,63 @@ def train_out_of_core(
 
     train_sample = fetch_sample(train_query, limit=sample_limit, settings=effective_settings)
     if train_sample.empty:
-        raise ValueError("Train sample is empty. Execute Snowflake SQL scripts before training.")
+        raise ValueError("Train sample is empty. Run bootstrap before training.")
 
-    dummy_preprocessor, dummy_model = train_dummy_regressor(train_sample)
-    dummy_metrics = {
-        "val_rmse": evaluate_model(dummy_model, dummy_preprocessor, val_query, batch_size, effective_settings),
-        "test_rmse": evaluate_model(dummy_model, dummy_preprocessor, test_query, batch_size, effective_settings),
-    }
+    # Fit preprocessor once on training sample
+    preprocessor = fit_preprocessor_from_sample(train_sample)
+    X_train, y_train = split_features_target(train_sample)
+    X_train_t = preprocessor.transform(X_train)
 
-    incremental_preprocessor = fit_preprocessor_from_sample(train_sample)
-    incremental_model = train_incremental_model(
-        train_query,
-        incremental_preprocessor,
-        batch_size=batch_size,
-        settings=effective_settings,
-    )
-    incremental_metrics = {
-        "val_rmse": evaluate_model(
-            incremental_model,
-            incremental_preprocessor,
-            val_query,
-            batch_size,
-            effective_settings,
-        ),
-        "test_rmse": evaluate_model(
-            incremental_model,
-            incremental_preprocessor,
-            test_query,
-            batch_size,
-            effective_settings,
-        ),
-    }
+    all_models_metrics: dict[str, dict[str, float]] = {}
+    candidates: dict[str, tuple] = {}
 
-    histgb_preprocessor, histgb_model = train_hist_gradient_boosting(train_sample)
-    histgb_metrics = {
-        "val_rmse": evaluate_model(histgb_model, histgb_preprocessor, val_query, batch_size, effective_settings),
-        "test_rmse": evaluate_model(histgb_model, histgb_preprocessor, test_query, batch_size, effective_settings),
-    }
-    candidates = {
-        "dummy_regressor": (dummy_model, dummy_preprocessor, dummy_metrics),
-        "sgd_regressor": (incremental_model, incremental_preprocessor, incremental_metrics),
-        "hist_gradient_boosting": (histgb_model, histgb_preprocessor, histgb_metrics),
-    }
-    best_name = min(candidates, key=lambda name: candidates[name][2]["val_rmse"])
-    best_model, best_preprocessor, best_metrics = candidates[best_name]
+    for entry in MODEL_ZOO:
+        model = entry.estimator
 
+        if entry.needs_incremental:
+            # SGD: true out-of-core via Snowflake batches
+            model = train_incremental_snowflake(
+                train_query, preprocessor, model, batch_size, effective_settings
+            )
+        else:
+            # sample_only models: fit on training sample
+            model.fit(X_train_t, y_train)
+
+        val_rmse = evaluate_model(model, preprocessor, val_query, batch_size, effective_settings)
+        test_rmse = evaluate_model(model, preprocessor, test_query, batch_size, effective_settings)
+
+        metrics = {"val_rmse": val_rmse, "test_rmse": test_rmse}
+        all_models_metrics[entry.name] = metrics
+        candidates[entry.name] = (model, metrics)
+
+    # Print comparison table
+    print("\n=== Model Comparison ===")
+    print(f"{'Model':<30} {'Val RMSE':>10} {'Test RMSE':>10}")
+    print("-" * 52)
+    best_name = min(candidates, key=lambda n: candidates[n][1]["val_rmse"])
+    for name, (_, m) in sorted(candidates.items(), key=lambda x: x[1][1]["val_rmse"]):
+        marker = " <-- WINNER" if name == best_name else ""
+        print(f"{name:<30} {m['val_rmse']:>10.4f} {m['test_rmse']:>10.4f}{marker}")
+
+    best_model, best_metrics = candidates[best_name]
     model_dir = ensure_model_dir(effective_settings)
-    artifact_path = save_artifact(best_model, best_preprocessor, best_metrics, model_dir / "nyc_taxi_fare_baseline.joblib")
+    artifact_path = save_artifact(
+        best_model,
+        preprocessor,
+        best_name,
+        best_metrics,
+        all_models_metrics,
+        model_dir / "nyc_taxi_fare_baseline.joblib",
+    )
 
     return {
         "selected_model": best_name,
         "artifact_path": str(artifact_path),
-        "dummy_metrics": dummy_metrics,
-        "incremental_metrics": incremental_metrics,
-        "hist_gradient_boosting_metrics": histgb_metrics,
+        "all_models_metrics": all_models_metrics,
     }
 
 
 if __name__ == "__main__":
     results = train_out_of_core()
-    print(results)
+    print(f"\nWinner: {results['selected_model']}")
+    print(f"Artifact: {results['artifact_path']}")
