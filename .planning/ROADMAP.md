@@ -37,6 +37,12 @@
 - `train_local.py` actualizado para comparar todos los modelos y elegir el mejor por val_rmse
 - Tabla de métricas impresa al final del entrenamiento
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Create model_zoo.py catalog and add xgboost/lightgbm to requirements.txt
+- [ ] 02-02-PLAN.md — Update train_local.py to iterate MODEL_ZOO and save enriched artifact
+
 **Success Criteria:**
 1. El entrenamiento compara al menos 5 modelos: Dummy, SGD, RandomForest, XGBoost, LightGBM
 2. El modelo con menor val_rmse se guarda como artefacto principal
