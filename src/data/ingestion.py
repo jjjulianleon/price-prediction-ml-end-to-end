@@ -546,6 +546,14 @@ def ingest_tlc_period(settings: Settings | None = None, overwrite: bool = True) 
                 remove_stage_file(effective_settings, file_name)
             except Exception:
                 LOGGER.warning("Could not clean staged file %s", file_name)
+        # Remove local parquet files after staging/copy to free disk space on large runs
+        for local_path in parquet_paths:
+            try:
+                if local_path.exists():
+                    local_path.unlink()
+                    LOGGER.info("Removed local parquet file: %s", local_path)
+            except Exception:
+                LOGGER.warning("Could not remove local parquet file %s", local_path)
 
 
 def ingest_tlc_month(settings: Settings | None = None, overwrite: bool = True) -> None:
