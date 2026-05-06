@@ -2,7 +2,7 @@
 
 ## Contexto
 
-El proyecto utiliza `NYC TLC Yellow Taxi Trip Record Data` para predecir la tarifa base de un viaje individual (`fare_amount`) como problema de regresion supervisada.
+El proyecto utiliza `NYC TLC Taxi Trip Record Data` para predecir la tarifa base de un viaje individual (`fare_amount`) como problema de regresion supervisada.
 
 La arquitectura debe respetar un escenario Big Data:
 
@@ -13,7 +13,7 @@ La arquitectura debe respetar un escenario Big Data:
 ## Fuente de datos
 
 - Fuente principal: `NYC TLC Trip Record Data`
-- Servicio actual: `Yellow Taxi`
+- Servicios soportados: `Yellow Taxi`, `Green Taxi` o ambas flotas combinadas
 - Unidad de analisis: un viaje individual
 
 ## Objetivo del modelo
@@ -38,6 +38,7 @@ El modelo simula una inferencia hecha antes del viaje. Por tanto, solo pueden us
 ## Variables conocidas antes del viaje
 
 - `pickup_datetime`
+- `trip_type`
 - `pickup_location_id`
 - `dropoff_location_id`
 - `passenger_count`

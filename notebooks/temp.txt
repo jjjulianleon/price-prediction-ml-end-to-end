@@ -1,0 +1,637 @@
+[22:01:02] === Entrenando modelo sample-based: dummy_regressor ===
+[22:01:02] Fit input for dummy_regressor: shape=(20000, 4194)
+[22:01:02] Evaluando dummy_regressor en validation | dense_eval=False | batch_size=25000
+[22:01:02] dummy_regressor validation window 1: 2025-05-01 -> 2025-05-31
+[22:01:09] dummy_regressor validation batches=5 in current window
+[22:01:11] dummy_regressor validation batches=10 in current window
+[22:01:12] dummy_regressor validation batches=15 in current window
+[22:01:13] dummy_regressor validation batches=20 in current window
+[22:01:15] dummy_regressor validation batches=25 in current window
+[22:01:16] dummy_regressor validation batches=30 in current window
+[22:01:17] dummy_regressor validation batches=35 in current window
+[22:01:19] dummy_regressor validation batches=40 in current window
+[22:01:20] dummy_regressor validation batches=45 in current window
+[22:01:21] dummy_regressor validation batches=50 in current window
+[22:01:23] dummy_regressor validation batches=55 in current window
+[22:01:23] dummy_regressor validation batches=60 in current window
+[22:01:26] Evaluando dummy_regressor en test | dense_eval=False | batch_size=25000
+[22:01:26] dummy_regressor test window 1: 2025-06-01 -> 2025-06-30
+[22:01:32] dummy_regressor test batches=5 in current window
+[22:01:33] dummy_regressor test batches=10 in current window
+[22:01:35] dummy_regressor test batches=15 in current window
+[22:01:36] dummy_regressor test batches=20 in current window
+[22:01:37] dummy_regressor test batches=25 in current window
+[22:01:39] dummy_regressor test batches=30 in current window
+[22:01:40] dummy_regressor test batches=35 in current window
+[22:01:41] dummy_regressor test batches=40 in current window
+[22:01:43] dummy_regressor test batches=45 in current window
+[22:01:43] dummy_regressor test batches=50 in current window
+[22:01:45] dummy_regressor test batches=55 in current window
+[22:01:45] dummy_regressor test batches=60 in current window
+[22:01:47] dummy_regressor listo | val_rmse=19.0117 | test_rmse=190.5576
+[22:01:47] === Entrenando modelo sample-based: ridge_regressor ===
+[22:01:47] Fit input for ridge_regressor: shape=(20000, 4194)
+[22:01:47] Evaluando ridge_regressor en validation | dense_eval=False | batch_size=25000
+[22:01:47] ridge_regressor validation window 1: 2025-05-01 -> 2025-05-31
+[22:01:53] ridge_regressor validation batches=5 in current window
+[22:01:54] ridge_regressor validation batches=10 in current window
+[22:01:56] ridge_regressor validation batches=15 in current window
+[22:01:56] ridge_regressor validation batches=20 in current window
+[22:01:58] ridge_regressor validation batches=25 in current window
+[22:02:00] ridge_regressor validation batches=30 in current window
+[22:02:00] ridge_regressor validation batches=35 in current window
+[22:02:02] ridge_regressor validation batches=40 in current window
+[22:02:03] ridge_regressor validation batches=45 in current window
+[22:02:04] ridge_regressor validation batches=50 in current window
+[22:02:06] ridge_regressor validation batches=55 in current window
+[22:02:06] ridge_regressor validation batches=60 in current window
+[22:02:08] Evaluando ridge_regressor en test | dense_eval=False | batch_size=25000
+[22:02:08] ridge_regressor test window 1: 2025-06-01 -> 2025-06-30
+[22:02:14] ridge_regressor test batches=5 in current window
+[22:02:15] ridge_regressor test batches=10 in current window
+[22:02:17] ridge_regressor test batches=15 in current window
+[22:02:18] ridge_regressor test batches=20 in current window
+[22:02:19] ridge_regressor test batches=25 in current window
+[22:02:21] ridge_regressor test batches=30 in current window
+[22:02:21] ridge_regressor test batches=35 in current window
+[22:02:23] ridge_regressor test batches=40 in current window
+[22:02:24] ridge_regressor test batches=45 in current window
+[22:02:25] ridge_regressor test batches=50 in current window
+[22:02:27] ridge_regressor test batches=55 in current window
+[22:02:27] ridge_regressor test batches=60 in current window
+[22:02:29] ridge_regressor listo | val_rmse=376.0913 | test_rmse=191.0480
+[22:02:29] === Entrenando modelo sample-based: random_forest ===
+[22:02:29] Fit input for random_forest: shape=(20000, 4194)
+[22:02:37] Evaluando random_forest en validation | dense_eval=False | batch_size=25000
+[22:02:37] random_forest validation window 1: 2025-05-01 -> 2025-05-31
+[22:02:43] random_forest validation batches=5 in current window
+[22:02:45] random_forest validation batches=10 in current window
+[22:02:47] random_forest validation batches=15 in current window
+[22:02:48] random_forest validation batches=20 in current window
+[22:02:51] random_forest validation batches=25 in current window
+[22:02:52] random_forest validation batches=30 in current window
+[22:02:54] random_forest validation batches=35 in current window
+[22:02:56] random_forest validation batches=40 in current window
+[22:02:57] random_forest validation batches=45 in current window
+[22:02:59] random_forest validation batches=50 in current window
+[22:03:02] random_forest validation batches=55 in current window
+[22:03:03] random_forest validation batches=60 in current window
+[22:03:05] Evaluando random_forest en test | dense_eval=False | batch_size=25000
+[22:03:05] random_forest test window 1: 2025-06-01 -> 2025-06-30
+[22:03:11] random_forest test batches=5 in current window
+[22:03:13] random_forest test batches=10 in current window
+[22:03:16] random_forest test batches=15 in current window
+[22:03:17] random_forest test batches=20 in current window
+[22:03:20] random_forest test batches=25 in current window
+[22:03:23] random_forest test batches=30 in current window
+[22:03:24] random_forest test batches=35 in current window
+[22:03:27] random_forest test batches=40 in current window
+[22:03:28] random_forest test batches=45 in current window
+[22:03:31] random_forest test batches=50 in current window
+[22:03:33] random_forest test batches=55 in current window
+[22:03:34] random_forest test batches=60 in current window
+[22:03:36] random_forest listo | val_rmse=6.4426 | test_rmse=189.6766
+[22:03:36] === Entrenando modelo sample-based: adaboost ===
+[22:03:36] Fit input for adaboost: shape=(20000, 4194)
+[22:03:43] Evaluando adaboost en validation | dense_eval=False | batch_size=25000
+[22:03:43] adaboost validation window 1: 2025-05-01 -> 2025-05-31
+[22:03:49] adaboost validation batches=5 in current window
+[22:03:55] adaboost validation batches=10 in current window
+[22:04:01] adaboost validation batches=15 in current window
+[22:04:03] adaboost validation batches=20 in current window
+[22:04:09] adaboost validation batches=25 in current window
+[22:04:12] adaboost validation batches=30 in current window
+[22:04:16] adaboost validation batches=35 in current window
+[22:04:23] adaboost validation batches=40 in current window
+[22:04:24] adaboost validation batches=45 in current window
+[22:04:29] adaboost validation batches=50 in current window
+[22:04:35] adaboost validation batches=55 in current window
+[22:04:36] adaboost validation batches=60 in current window
+[22:04:42] Evaluando adaboost en test | dense_eval=False | batch_size=25000
+[22:04:42] adaboost test window 1: 2025-06-01 -> 2025-06-30
+[22:04:48] adaboost test batches=5 in current window
+[22:04:53] adaboost test batches=10 in current window
+[22:04:59] adaboost test batches=15 in current window
+[22:05:00] adaboost test batches=20 in current window
+[22:05:05] adaboost test batches=25 in current window
+[22:05:11] adaboost test batches=30 in current window
+[22:05:12] adaboost test batches=35 in current window
+[22:05:18] adaboost test batches=40 in current window
+[22:05:21] adaboost test batches=45 in current window
+[22:05:24] adaboost test batches=50 in current window
+[22:05:30] adaboost test batches=55 in current window
+[22:05:32] adaboost test batches=60 in current window
+[22:05:37] adaboost listo | val_rmse=6.3350 | test_rmse=189.6698
+[22:05:37] === Entrenando modelo sample-based: gradient_boosting ===
+[22:05:37] Fit input for gradient_boosting: shape=(20000, 4194)
+[22:17:32] Evaluando gradient_boosting en validation | dense_eval=True | batch_size=5000
+[22:17:32] gradient_boosting validation window 1: 2025-05-01 -> 2025-05-31
+[22:17:41] gradient_boosting validation batches=5 in current window
+[22:17:55] gradient_boosting validation batches=10 in current window
+[22:18:07] gradient_boosting validation batches=15 in current window
+[22:18:11] gradient_boosting validation batches=20 in current window
+[22:18:22] gradient_boosting validation batches=25 in current window
+[22:18:27] gradient_boosting validation batches=30 in current window
+[22:18:37] gradient_boosting validation batches=35 in current window
+[22:18:50] gradient_boosting validation batches=40 in current window
+[22:18:53] gradient_boosting validation batches=45 in current window
+[22:19:05] gradient_boosting validation batches=50 in current window
+[22:19:17] gradient_boosting validation batches=55 in current window
+[22:19:19] gradient_boosting validation batches=60 in current window
+[22:19:31] Evaluando gradient_boosting en test | dense_eval=True | batch_size=5000
+[22:19:31] gradient_boosting test window 1: 2025-06-01 -> 2025-06-30
+[22:19:38] gradient_boosting test batches=5 in current window
+[22:19:48] gradient_boosting test batches=10 in current window
+[22:20:00] gradient_boosting test batches=15 in current window
+[22:20:03] gradient_boosting test batches=20 in current window
+[22:20:13] gradient_boosting test batches=25 in current window
+[22:20:23] gradient_boosting test batches=30 in current window
+[22:20:27] gradient_boosting test batches=35 in current window
+[22:20:40] gradient_boosting test batches=40 in current window
+[22:20:46] gradient_boosting test batches=45 in current window
+[22:20:53] gradient_boosting test batches=50 in current window
+[22:21:05] gradient_boosting test batches=55 in current window
+[22:21:08] gradient_boosting test batches=60 in current window
+[22:21:17] gradient_boosting listo | val_rmse=5.0754 | test_rmse=189.6330
+[22:21:17] === Entrenando modelo sample-based: hist_gradient_boosting ===
+[22:21:17] Fit input for hist_gradient_boosting: shape=(20000, 4194)
+[22:21:37] Evaluando hist_gradient_boosting en validation | dense_eval=True | batch_size=5000
+[22:21:37] hist_gradient_boosting validation window 1: 2025-05-01 -> 2025-05-31
+[22:21:44] hist_gradient_boosting validation batches=5 in current window
+[22:21:50] hist_gradient_boosting validation batches=10 in current window
+[22:21:58] hist_gradient_boosting validation batches=15 in current window
+[22:22:00] hist_gradient_boosting validation batches=20 in current window
+[22:22:07] hist_gradient_boosting validation batches=25 in current window
+[22:22:10] hist_gradient_boosting validation batches=30 in current window
+[22:22:14] hist_gradient_boosting validation batches=35 in current window
+[22:22:21] hist_gradient_boosting validation batches=40 in current window
+[22:22:23] hist_gradient_boosting validation batches=45 in current window
+[22:22:28] hist_gradient_boosting validation batches=50 in current window
+[22:22:34] hist_gradient_boosting validation batches=55 in current window
+[22:22:36] hist_gradient_boosting validation batches=60 in current window
+[22:22:42] Evaluando hist_gradient_boosting en test | dense_eval=True | batch_size=5000
+[22:22:42] hist_gradient_boosting test window 1: 2025-06-01 -> 2025-06-30
+[22:22:48] hist_gradient_boosting test batches=5 in current window
+[22:22:54] hist_gradient_boosting test batches=10 in current window
+[22:23:00] hist_gradient_boosting test batches=15 in current window
+[22:23:02] hist_gradient_boosting test batches=20 in current window
+[22:23:07] hist_gradient_boosting test batches=25 in current window
+[22:23:13] hist_gradient_boosting test batches=30 in current window
+[22:23:15] hist_gradient_boosting test batches=35 in current window
+[22:23:21] hist_gradient_boosting test batches=40 in current window
+[22:23:24] hist_gradient_boosting test batches=45 in current window
+[22:23:28] hist_gradient_boosting test batches=50 in current window
+[22:23:35] hist_gradient_boosting test batches=55 in current window
+[22:23:37] hist_gradient_boosting test batches=60 in current window
+[22:23:42] hist_gradient_boosting listo | val_rmse=5.9038 | test_rmse=189.6617
+[22:23:42] === Entrenando modelo sample-based: bagging ===
+[22:23:42] Fit input for bagging: shape=(20000, 4194)
+[22:23:47] Evaluando bagging en validation | dense_eval=False | batch_size=25000
+[22:23:47] bagging validation window 1: 2025-05-01 -> 2025-05-31
+[22:23:54] bagging validation batches=5 in current window
+[22:23:56] bagging validation batches=10 in current window
+[22:23:59] bagging validation batches=15 in current window
+[22:24:00] bagging validation batches=20 in current window
+[22:24:03] bagging validation batches=25 in current window
+[22:24:05] bagging validation batches=30 in current window
+[22:24:07] bagging validation batches=35 in current window
+[22:24:09] bagging validation batches=40 in current window
+[22:24:10] bagging validation batches=45 in current window
+[22:24:13] bagging validation batches=50 in current window
+[22:24:15] bagging validation batches=55 in current window
+[22:24:16] bagging validation batches=60 in current window
+[22:24:19] Evaluando bagging en test | dense_eval=False | batch_size=25000
+[22:24:19] bagging test window 1: 2025-06-01 -> 2025-06-30
+[22:24:25] bagging test batches=5 in current window
+[22:24:27] bagging test batches=10 in current window
+[22:24:30] bagging test batches=15 in current window
+[22:24:31] bagging test batches=20 in current window
+[22:24:33] bagging test batches=25 in current window
+[22:24:36] bagging test batches=30 in current window
+[22:24:37] bagging test batches=35 in current window
+[22:24:40] bagging test batches=40 in current window
+[22:24:41] bagging test batches=45 in current window
+[22:24:43] bagging test batches=50 in current window
+[22:24:46] bagging test batches=55 in current window
+[22:24:47] bagging test batches=60 in current window
+[22:24:49] bagging listo | val_rmse=5.5316 | test_rmse=189.6440
+[22:24:49] === Entrenando modelo sample-based: pasting ===
+[22:24:49] Fit input for pasting: shape=(20000, 4194)
+[22:24:50] Evaluando pasting en validation | dense_eval=False | batch_size=25000
+[22:24:50] pasting validation window 1: 2025-05-01 -> 2025-05-31
+[22:24:56] pasting validation batches=5 in current window
+[22:24:59] pasting validation batches=10 in current window
+[22:25:01] pasting validation batches=15 in current window
+[22:25:02] pasting validation batches=20 in current window
+[22:25:05] pasting validation batches=25 in current window
+[22:25:07] pasting validation batches=30 in current window
+[22:25:08] pasting validation batches=35 in current window
+[22:25:11] pasting validation batches=40 in current window
+[22:25:12] pasting validation batches=45 in current window
+[22:25:14] pasting validation batches=50 in current window
+[22:25:17] pasting validation batches=55 in current window
+[22:25:18] pasting validation batches=60 in current window
+[22:25:21] Evaluando pasting en test | dense_eval=False | batch_size=25000
+[22:25:21] pasting test window 1: 2025-06-01 -> 2025-06-30
+[22:25:27] pasting test batches=5 in current window
+[22:25:29] pasting test batches=10 in current window
+[22:25:31] pasting test batches=15 in current window
+[22:25:33] pasting test batches=20 in current window
+[22:25:35] pasting test batches=25 in current window
+[22:25:38] pasting test batches=30 in current window
+[22:25:38] pasting test batches=35 in current window
+[22:25:41] pasting test batches=40 in current window
+[22:25:43] pasting test batches=45 in current window
+[22:25:45] pasting test batches=50 in current window
+[22:25:47] pasting test batches=55 in current window
+[22:25:48] pasting test batches=60 in current window
+[22:25:51] pasting listo | val_rmse=5.5470 | test_rmse=189.6438
+[22:25:51] === Entrenando modelo sample-based: voting ===
+[22:25:51] Fit input for voting: shape=(20000, 4194)
+[22:39:27] Evaluando voting en validation | dense_eval=True | batch_size=5000
+[22:39:27] voting validation window 1: 2025-05-01 -> 2025-05-31
+[22:39:36] voting validation batches=5 in current window
+[22:39:56] voting validation batches=10 in current window
+[22:40:14] voting validation batches=15 in current window
+[22:40:20] voting validation batches=20 in current window
+[22:40:38] voting validation batches=25 in current window
+[22:40:48] voting validation batches=30 in current window
+[22:41:01] voting validation batches=35 in current window
+[22:41:22] voting validation batches=40 in current window
+[22:41:26] voting validation batches=45 in current window
+[22:41:44] voting validation batches=50 in current window
+[22:42:03] voting validation batches=55 in current window
+[22:42:07] voting validation batches=60 in current window
+[22:42:28] Evaluando voting en test | dense_eval=True | batch_size=5000
+[22:42:28] voting test window 1: 2025-06-01 -> 2025-06-30
+[22:42:38] voting test batches=5 in current window
+[22:42:52] voting test batches=10 in current window
+[22:43:09] voting test batches=15 in current window
+[22:43:13] voting test batches=20 in current window
+[22:43:30] voting test batches=25 in current window
+[22:43:47] voting test batches=30 in current window
+[22:43:52] voting test batches=35 in current window
+[22:44:13] voting test batches=40 in current window
+[22:44:23] voting test batches=45 in current window
+[22:44:36] voting test batches=50 in current window
+[22:44:53] voting test batches=55 in current window
+[22:44:58] voting test batches=60 in current window
+[22:45:13] voting listo | val_rmse=5.5350 | test_rmse=189.6483
+[22:45:13] === Entrenando modelo sample-based: xgboost ===
+[22:45:13] Fit input for xgboost: shape=(20000, 4194)
+[22:45:28] Evaluando xgboost en validation | dense_eval=False | batch_size=25000
+[22:45:28] xgboost validation window 1: 2025-05-01 -> 2025-05-31
+[22:45:34] xgboost validation batches=5 in current window
+[22:45:37] xgboost validation batches=10 in current window
+[22:45:39] xgboost validation batches=15 in current window
+[22:45:40] xgboost validation batches=20 in current window
+[22:45:43] xgboost validation batches=25 in current window
+[22:45:44] xgboost validation batches=30 in current window
+[22:45:47] xgboost validation batches=35 in current window
+[22:45:50] xgboost validation batches=40 in current window
+[22:45:51] xgboost validation batches=45 in current window
+[22:45:54] xgboost validation batches=50 in current window
+[22:45:57] xgboost validation batches=55 in current window
+[22:45:58] xgboost validation batches=60 in current window
+[22:46:00] Evaluando xgboost en test | dense_eval=False | batch_size=25000
+[22:46:00] xgboost test window 1: 2025-06-01 -> 2025-06-30
+[22:46:06] xgboost test batches=5 in current window
+[22:46:08] xgboost test batches=10 in current window
+[22:46:10] xgboost test batches=15 in current window
+[22:46:12] xgboost test batches=20 in current window
+[22:46:14] xgboost test batches=25 in current window
+[22:46:16] xgboost test batches=30 in current window
+[22:46:17] xgboost test batches=35 in current window
+[22:46:20] xgboost test batches=40 in current window
+[22:46:21] xgboost test batches=45 in current window
+[22:46:23] xgboost test batches=50 in current window
+[22:46:25] xgboost test batches=55 in current window
+[22:46:26] xgboost test batches=60 in current window
+[22:46:29] xgboost listo | val_rmse=5.6381 | test_rmse=189.6522
+[22:46:29] === Entrenando modelo sample-based: lightgbm ===
+[22:46:29] Fit input for lightgbm: shape=(20000, 4194)
+[22:46:46] Evaluando lightgbm en validation | dense_eval=False | batch_size=25000
+[22:46:46] lightgbm validation window 1: 2025-05-01 -> 2025-05-31
+
+
+
+
+[22:01:02] === Entrenando modelo sample-based: dummy_regressor ===
+[22:01:02] Fit input for dummy_regressor: shape=(20000, 4194)
+[22:01:02] Evaluando dummy_regressor en validation | dense_eval=False | batch_size=25000
+[22:01:02] dummy_regressor validation window 1: 2025-05-01 -> 2025-05-31
+[22:01:09] dummy_regressor validation batches=5 in current window
+[22:01:11] dummy_regressor validation batches=10 in current window
+[22:01:12] dummy_regressor validation batches=15 in current window
+[22:01:13] dummy_regressor validation batches=20 in current window
+[22:01:15] dummy_regressor validation batches=25 in current window
+[22:01:16] dummy_regressor validation batches=30 in current window
+[22:01:17] dummy_regressor validation batches=35 in current window
+[22:01:19] dummy_regressor validation batches=40 in current window
+[22:01:20] dummy_regressor validation batches=45 in current window
+[22:01:21] dummy_regressor validation batches=50 in current window
+[22:01:23] dummy_regressor validation batches=55 in current window
+[22:01:23] dummy_regressor validation batches=60 in current window
+[22:01:26] Evaluando dummy_regressor en test | dense_eval=False | batch_size=25000
+[22:01:26] dummy_regressor test window 1: 2025-06-01 -> 2025-06-30
+[22:01:32] dummy_regressor test batches=5 in current window
+[22:01:33] dummy_regressor test batches=10 in current window
+[22:01:35] dummy_regressor test batches=15 in current window
+[22:01:36] dummy_regressor test batches=20 in current window
+[22:01:37] dummy_regressor test batches=25 in current window
+[22:01:39] dummy_regressor test batches=30 in current window
+[22:01:40] dummy_regressor test batches=35 in current window
+...
+[22:46:29] === Entrenando modelo sample-based: lightgbm ===
+[22:46:29] Fit input for lightgbm: shape=(20000, 4194)
+[22:46:46] Evaluando lightgbm en validation | dense_eval=False | batch_size=25000
+[22:46:46] lightgbm validation window 1: 2025-05-01 -> 2025-05-31
+Output is truncated. View as a scrollable element or open in a text editor. Adjust cell output settings...
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:46:52] lightgbm validation batches=5 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:46:55] lightgbm validation batches=10 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:46:57] lightgbm validation batches=15 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:46:58] lightgbm validation batches=20 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:00] lightgbm validation batches=25 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:01] lightgbm validation batches=30 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:02] lightgbm validation batches=35 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:05] lightgbm validation batches=40 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:06] lightgbm validation batches=45 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:07] lightgbm validation batches=50 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:09] lightgbm validation batches=55 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:10] lightgbm validation batches=60 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:12] Evaluando lightgbm en test | dense_eval=False | batch_size=25000
+[22:47:12] lightgbm test window 1: 2025-06-01 -> 2025-06-30
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:18] lightgbm test batches=5 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:20] lightgbm test batches=10 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:23] lightgbm test batches=15 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:24] lightgbm test batches=20 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:26] lightgbm test batches=25 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:28] lightgbm test batches=30 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:29] lightgbm test batches=35 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:31] lightgbm test batches=40 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:32] lightgbm test batches=45 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:34] lightgbm test batches=50 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:36] lightgbm test batches=55 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:37] lightgbm test batches=60 in current window
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+/home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end/.venv/lib/python3.12/site-packages/sklearn/utils/validation.py:2691: UserWarning: X does not have valid feature names, but LGBMRegressor was fitted with feature names
+  warnings.warn(
+[22:47:39] lightgbm listo | val_rmse=5.8099 | test_rmse=189.6556
+[22:47:39] === Entrenando modelo sample-based: catboost ===
+[22:47:39] Fit input for catboost: shape=(20000, 4194)
+[22:47:44] Evaluando catboost en validation | dense_eval=True | batch_size=5000
+[22:47:44] catboost validation window 1: 2025-05-01 -> 2025-05-31
+[22:47:51] catboost validation batches=5 in current window
+[22:47:59] catboost validation batches=10 in current window
+[22:48:07] catboost validation batches=15 in current window

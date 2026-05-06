@@ -7,6 +7,7 @@ import io
 import logging
 from datetime import date, datetime
 from pathlib import Path
+from math import ceil
 from typing import Iterator, Sequence
 from urllib.request import urlretrieve
 
@@ -22,6 +23,96 @@ def normalize_dataframe_columns(df: pd.DataFrame) -> pd.DataFrame:
     normalized = df.copy()
     normalized.columns = [str(column).lower() for column in normalized.columns]
     return normalized
+
+
+def quote_sql_string(value: str) -> str:
+    return value.replace("'", "''")
+
+
+def canonical_raw_select_sql(settings: Settings) -> str:
+    selects: list[str] = []
+    if settings.yellow_enabled:
+        selects.append(
+            f"""
+            SELECT
+                'yellow' AS trip_type,
+                vendorid,
+                tpep_pickup_datetime AS pickup_datetime,
+                tpep_dropoff_datetime AS dropoff_datetime,
+                passenger_count,
+                trip_distance,
+                ratecodeid,
+                pulocationid,
+                dolocationid,
+                payment_type,
+                fare_amount,
+                extra,
+                mta_tax,
+                tip_amount,
+                tolls_amount,
+                improvement_surcharge,
+                total_amount,
+                congestion_surcharge,
+                airport_fee
+            FROM {settings.raw_table}
+            """.strip()
+        )
+    if settings.green_enabled:
+        selects.append(
+            f"""
+            SELECT
+                'green' AS trip_type,
+                vendorid,
+                lpep_pickup_datetime AS pickup_datetime,
+                lpep_dropoff_datetime AS dropoff_datetime,
+                passenger_count,
+                trip_distance,
+                ratecodeid,
+                pulocationid,
+                dolocationid,
+                payment_type,
+                fare_amount,
+                extra,
+                mta_tax,
+                tip_amount,
+                tolls_amount,
+                improvement_surcharge,
+                total_amount,
+                congestion_surcharge,
+                NULL::FLOAT AS airport_fee
+            FROM {settings.raw_table_green}
+            """.strip()
+        )
+    if not selects:
+        raise ValueError("TRIP_TYPE must enable at least one taxi source.")
+    return "\nUNION ALL\n".join(selects)
+
+
+def balanced_raw_sample_sql(settings: Settings, limit: int, sample_seed: int | None = None) -> str:
+    enabled_trip_types = list(settings.trip_types)
+    if not enabled_trip_types:
+        raise ValueError("TRIP_TYPE must enable at least one taxi source.")
+
+    per_type_limit = max(1, ceil(limit / len(enabled_trip_types)))
+    random_seed_offset = sample_seed or 0
+    unioned_query = canonical_raw_select_sql(settings)
+    parts: list[str] = []
+
+    for idx, trip_type in enumerate(enabled_trip_types):
+        parts.append(
+            f"""
+            SELECT *
+            FROM (
+                SELECT *
+                FROM ({unioned_query}) AS raw_union
+                WHERE trip_type = '{quote_sql_string(trip_type)}'
+                ORDER BY RANDOM({random_seed_offset + idx + 1})
+                LIMIT {per_type_limit}
+            ) AS {trip_type}_sample
+            """.strip()
+        )
+
+    return "\nUNION ALL\n".join(parts)
 
 
 def configure_logging() -> None:
@@ -133,12 +224,19 @@ def fetch_sample(
     settings: Settings | None = None,
 ) -> pd.DataFrame:
     wrapped_query = query.strip().rstrip(";")
-    seed_clause = f" SEED ({sample_seed})" if sample_pct is not None and sample_seed is not None else ""
-    sample_clause = f" SAMPLE ({sample_pct}){seed_clause}" if sample_pct is not None else ""
-    sample_query = f"SELECT * FROM ({wrapped_query}) AS base{sample_clause} LIMIT {limit}"
+
+    sample_query = f"""
+        SELECT *
+        FROM ({wrapped_query}) AS base
+        ORDER BY RANDOM()
+        LIMIT {limit}
+    """
+
     batches = list(fetch_data_in_batches(sample_query, batch_size=limit, settings=settings))
+
     if not batches:
         return pd.DataFrame()
+
     return pd.concat(batches, ignore_index=True)
 
 
@@ -206,14 +304,20 @@ def object_exists(object_name: str, object_type: str, settings: Settings | None 
 
 def log_transform_summary(settings: Settings) -> None:
     LOGGER.info("Transform summary for window=%s", settings.processing_window_label)
-    objects = [
-        ("raw_rows", settings.raw_table, "TABLES"),
-        ("staging_rows", settings.staging_table, "TABLES"),
-        ("obt_rows", settings.obt_table, "TABLES"),
-        ("train_rows", settings.train_table, "VIEWS"),
-        ("val_rows", settings.val_table, "VIEWS"),
-        ("test_rows", settings.test_table, "VIEWS"),
-    ]
+    objects = []
+    if settings.yellow_enabled:
+        objects.append(("raw_rows_yellow", settings.raw_table, "TABLES"))
+    if settings.green_enabled:
+        objects.append(("raw_rows_green", settings.raw_table_green, "TABLES"))
+    objects.extend(
+        [
+            ("staging_rows", settings.staging_table, "TABLES"),
+            ("obt_rows", settings.obt_table, "TABLES"),
+            ("train_rows", settings.train_table, "VIEWS"),
+            ("val_rows", settings.val_table, "VIEWS"),
+            ("test_rows", settings.test_table, "VIEWS"),
+        ]
+    )
     for label, object_name, object_type in objects:
         try:
             if not object_exists(object_name, object_type, settings=settings):
@@ -237,35 +341,36 @@ def fetch_one_row(query: str, settings: Settings | None = None):
 
 
 def log_obt_filter_diagnostics(settings: Settings) -> None:
+    raw_union_query = canonical_raw_select_sql(settings)
     diagnostic_query = f"""
     SELECT
         COUNT(*) AS raw_total,
-        COUNT_IF(tpep_pickup_datetime IS NOT NULL) AS nonnull_pickup,
-        COUNT_IF(tpep_dropoff_datetime IS NOT NULL) AS nonnull_dropoff,
-        COUNT_IF(CAST(tpep_pickup_datetime AS DATE) BETWEEN TO_DATE('{settings.data_start_date}') AND TO_DATE('{settings.data_end_date}')) AS in_date_range,
-        COUNT_IF(tpep_dropoff_datetime > tpep_pickup_datetime) AS valid_time_order,
+        COUNT_IF(pickup_datetime IS NOT NULL) AS nonnull_pickup,
+        COUNT_IF(dropoff_datetime IS NOT NULL) AS nonnull_dropoff,
+        COUNT_IF(CAST(pickup_datetime AS DATE) BETWEEN TO_DATE('{settings.data_start_date}') AND TO_DATE('{settings.data_end_date}')) AS in_date_range,
+        COUNT_IF(dropoff_datetime > pickup_datetime) AS valid_time_order,
         COUNT_IF(trip_distance > 0) AS positive_trip_distance,
         COUNT_IF(passenger_count BETWEEN 1 AND 6) AS passenger_range_ok,
         COUNT_IF(fare_amount > 0) AS positive_fare_amount,
         COUNT_IF(pulocationid IS NOT NULL) AS nonnull_pulocationid,
         COUNT_IF(dolocationid IS NOT NULL) AS nonnull_dolocationid,
         COUNT_IF(
-            tpep_pickup_datetime IS NOT NULL
-            AND tpep_dropoff_datetime IS NOT NULL
-            AND CAST(tpep_pickup_datetime AS DATE) BETWEEN TO_DATE('{settings.data_start_date}') AND TO_DATE('{settings.data_end_date}')
-            AND tpep_dropoff_datetime > tpep_pickup_datetime
+            pickup_datetime IS NOT NULL
+            AND dropoff_datetime IS NOT NULL
+            AND CAST(pickup_datetime AS DATE) BETWEEN TO_DATE('{settings.data_start_date}') AND TO_DATE('{settings.data_end_date}')
+            AND dropoff_datetime > pickup_datetime
             AND trip_distance > 0
             AND passenger_count BETWEEN 1 AND 6
             AND fare_amount > 0
             AND pulocationid IS NOT NULL
             AND dolocationid IS NOT NULL
         ) AS rows_passing_all_filters
-    FROM {settings.raw_table}
+    FROM ({raw_union_query}) AS raw_union
     """
     try:
         result = fetch_one_row(diagnostic_query, settings=settings)
         if result is None:
-            LOGGER.warning("OBT diagnostics returned no rows for %s", settings.raw_table)
+            LOGGER.warning("OBT diagnostics returned no rows for enabled raw sources")
             return
 
         columns = [
@@ -288,35 +393,37 @@ def log_obt_filter_diagnostics(settings: Settings) -> None:
         if int(result[-1] or 0) == 0:
             log_problem_samples(settings)
     except Exception:
-        LOGGER.exception("Failed to compute OBT diagnostics for %s", settings.raw_table)
+        LOGGER.exception("Failed to compute OBT diagnostics for enabled raw sources")
 
 
 def log_problem_samples(settings: Settings) -> None:
+    raw_union_query = canonical_raw_select_sql(settings)
     sample_query = f"""
     SELECT
+        trip_type,
         vendorid,
-        tpep_pickup_datetime,
-        tpep_dropoff_datetime,
+        pickup_datetime,
+        dropoff_datetime,
         passenger_count,
         trip_distance,
         pulocationid,
         dolocationid,
         fare_amount,
-        CASE WHEN tpep_pickup_datetime IS NULL THEN 1 ELSE 0 END AS bad_pickup_null,
-        CASE WHEN tpep_dropoff_datetime IS NULL THEN 1 ELSE 0 END AS bad_dropoff_null,
-        CASE WHEN CAST(tpep_pickup_datetime AS DATE) NOT BETWEEN TO_DATE('{settings.data_start_date}') AND TO_DATE('{settings.data_end_date}') THEN 1 ELSE 0 END AS bad_date_range,
-        CASE WHEN tpep_dropoff_datetime <= tpep_pickup_datetime THEN 1 ELSE 0 END AS bad_time_order,
+        CASE WHEN pickup_datetime IS NULL THEN 1 ELSE 0 END AS bad_pickup_null,
+        CASE WHEN dropoff_datetime IS NULL THEN 1 ELSE 0 END AS bad_dropoff_null,
+        CASE WHEN CAST(pickup_datetime AS DATE) NOT BETWEEN TO_DATE('{settings.data_start_date}') AND TO_DATE('{settings.data_end_date}') THEN 1 ELSE 0 END AS bad_date_range,
+        CASE WHEN dropoff_datetime <= pickup_datetime THEN 1 ELSE 0 END AS bad_time_order,
         CASE WHEN trip_distance <= 0 THEN 1 ELSE 0 END AS bad_trip_distance,
         CASE WHEN passenger_count NOT BETWEEN 1 AND 6 THEN 1 ELSE 0 END AS bad_passenger_count,
         CASE WHEN fare_amount <= 0 THEN 1 ELSE 0 END AS bad_fare_amount,
         CASE WHEN pulocationid IS NULL THEN 1 ELSE 0 END AS bad_pulocationid,
         CASE WHEN dolocationid IS NULL THEN 1 ELSE 0 END AS bad_dolocationid
-    FROM {settings.raw_table}
+    FROM ({raw_union_query}) AS raw_union
     WHERE NOT (
-        tpep_pickup_datetime IS NOT NULL
-        AND tpep_dropoff_datetime IS NOT NULL
-        AND CAST(tpep_pickup_datetime AS DATE) BETWEEN TO_DATE('{settings.data_start_date}') AND TO_DATE('{settings.data_end_date}')
-        AND tpep_dropoff_datetime > tpep_pickup_datetime
+        pickup_datetime IS NOT NULL
+        AND dropoff_datetime IS NOT NULL
+        AND CAST(pickup_datetime AS DATE) BETWEEN TO_DATE('{settings.data_start_date}') AND TO_DATE('{settings.data_end_date}')
+        AND dropoff_datetime > pickup_datetime
         AND trip_distance > 0
         AND passenger_count BETWEEN 1 AND 6
         AND fare_amount > 0
@@ -349,21 +456,21 @@ def iter_month_starts(settings: Settings) -> list[date]:
     return month_starts
 
 
-def month_file_name(month_start: date) -> str:
-    return f"yellow_tripdata_{month_start.year:04d}-{month_start.month:02d}.parquet"
+def month_file_name(trip_type: str, month_start: date) -> str:
+    return f"{trip_type}_tripdata_{month_start.year:04d}-{month_start.month:02d}.parquet"
 
 
-def month_file_url(settings: Settings, month_start: date) -> str:
-    return f"{settings.nyc_tlc_base_url.rstrip('/')}/{month_file_name(month_start)}"
+def month_file_url(settings: Settings, trip_type: str, month_start: date) -> str:
+    return f"{settings.nyc_tlc_base_url.rstrip('/')}/{month_file_name(trip_type, month_start)}"
 
 
-def download_tlc_month_files(settings: Settings) -> list[Path]:
-    target_dir = settings.local_data_dir / settings.trip_type
+def download_tlc_month_files(settings: Settings, trip_type: str) -> list[Path]:
+    target_dir = settings.local_data_dir / trip_type
     target_dir.mkdir(parents=True, exist_ok=True)
     downloaded_files: list[Path] = []
 
     for month_start in iter_month_starts(settings):
-        file_name = month_file_name(month_start)
+        file_name = month_file_name(trip_type, month_start)
         destination = target_dir / file_name
         if destination.exists():
             LOGGER.info("Skipping download; parquet already exists | path=%s", destination)
@@ -373,7 +480,7 @@ def download_tlc_month_files(settings: Settings) -> list[Path]:
             raise FileNotFoundError(
                 f"Download disabled and parquet missing locally: {destination}"
             )
-        url = month_file_url(settings, month_start)
+        url = month_file_url(settings, trip_type, month_start)
         LOGGER.info("Downloading NYC TLC parquet | url=%s", url)
         urlretrieve(url, destination)
         LOGGER.info("Downloaded parquet to %s", destination)
@@ -382,11 +489,13 @@ def download_tlc_month_files(settings: Settings) -> list[Path]:
     return downloaded_files
 
 
-def file_already_loaded(file_name: str, settings: Settings) -> bool:
+def file_already_loaded(file_name: str, trip_type: str, settings: Settings) -> bool:
+    audit_table = settings.raw_load_audit_table_for_trip_type(trip_type)
+    safe_file_name = quote_sql_string(file_name)
     query = f"""
     SELECT 1
-    FROM {settings.raw_load_audit_table}
-    WHERE file_name = '{file_name}'
+    FROM {audit_table}
+    WHERE file_name = '{safe_file_name}'
       AND copy_status = 'COPIED'
     LIMIT 1
     """
@@ -396,17 +505,19 @@ def file_already_loaded(file_name: str, settings: Settings) -> bool:
 def log_load_audit(
     file_name: str,
     local_path: Path,
+    trip_type: str,
     settings: Settings,
     copy_status: str,
     rows_loaded: int,
 ) -> None:
-    month_label = file_name.replace("yellow_tripdata_", "").replace(".parquet", "")
+    audit_table = settings.raw_load_audit_table_for_trip_type(trip_type)
+    month_label = file_name.replace(f"{trip_type}_tripdata_", "").replace(".parquet", "")
     query = f"""
-    MERGE INTO {settings.raw_load_audit_table} AS target
+    MERGE INTO {audit_table} AS target
     USING (
         SELECT
             '{file_name}' AS file_name,
-            '{settings.trip_type}' AS trip_type,
+            '{trip_type}' AS trip_type,
             '{month_label}' AS period_label,
             '{str(local_path)}' AS local_path,
             '{copy_status}' AS copy_status,
@@ -442,18 +553,19 @@ def log_load_audit(
     execute_sql(query, settings=settings)
 
 
-def put_file_to_stage(local_path: Path, settings: Settings) -> None:
+def put_file_to_stage(local_path: Path, trip_type: str, settings: Settings) -> None:
     if not settings.enable_stage_upload:
         LOGGER.info("Skipping PUT because ENABLE_STAGE_UPLOAD=false | path=%s", local_path)
         return
+    raw_stage = settings.raw_stage_for_trip_type(trip_type)
     connection = create_connection(settings=settings)
     try:
         with connection.cursor() as cursor:
             put_sql = (
-                f"PUT 'file://{local_path}' @{settings.raw_stage} "
+                f"PUT 'file://{local_path}' @{raw_stage} "
                 "AUTO_COMPRESS=FALSE OVERWRITE=TRUE PARALLEL=8"
             )
-            LOGGER.info("Uploading parquet to Snowflake stage | stage=%s", settings.raw_stage)
+            LOGGER.info("Uploading parquet to Snowflake stage | stage=%s", raw_stage)
             cursor.execute(put_sql)
             for row in cursor.fetchall():
                 LOGGER.info("PUT result: %s", row)
@@ -461,13 +573,15 @@ def put_file_to_stage(local_path: Path, settings: Settings) -> None:
         close_quietly(connection)
 
 
-def copy_stage_to_raw(settings: Settings, file_name: str) -> None:
+def copy_stage_to_raw(settings: Settings, trip_type: str, file_name: str) -> None:
     if not settings.enable_copy_into:
         LOGGER.info("Skipping COPY INTO because ENABLE_COPY_INTO=false | file=%s", file_name)
         return
+    raw_table = settings.raw_table_for_trip_type(trip_type)
+    raw_stage = settings.raw_stage_for_trip_type(trip_type)
     copy_sql = f"""
-    COPY INTO {settings.raw_table}
-    FROM @{settings.raw_stage}/{file_name}
+    COPY INTO {raw_table}
+    FROM @{raw_stage}/{file_name}
     FILE_FORMAT = (
         TYPE = PARQUET
         USE_LOGICAL_TYPE = TRUE
@@ -478,7 +592,7 @@ def copy_stage_to_raw(settings: Settings, file_name: str) -> None:
     connection = create_connection(settings=settings)
     try:
         with connection.cursor() as cursor:
-            LOGGER.info("Copying staged parquet into raw table | raw_table=%s", settings.raw_table)
+            LOGGER.info("Copying staged parquet into raw table | raw_table=%s", raw_table)
             LOGGER.info(
                 "COPY options | file_format=PARQUET logical_type=true | file=%s",
                 file_name,
@@ -490,62 +604,70 @@ def copy_stage_to_raw(settings: Settings, file_name: str) -> None:
         close_quietly(connection)
 
 
-def remove_stage_file(settings: Settings, file_name: str) -> None:
+def remove_stage_file(settings: Settings, trip_type: str, file_name: str) -> None:
     if not settings.enable_stage_upload:
         return
+    raw_stage = settings.raw_stage_for_trip_type(trip_type)
     connection = create_connection(settings=settings)
     try:
         with connection.cursor() as cursor:
-            cursor.execute(f"REMOVE @{settings.raw_stage}/{file_name}")
+            cursor.execute(f"REMOVE @{raw_stage}/{file_name}")
     finally:
         close_quietly(connection)
 
 
 def ingest_tlc_period(settings: Settings | None = None, overwrite: bool = True) -> None:
     effective_settings = settings or get_settings()
-    parquet_paths = download_tlc_month_files(effective_settings)
-    file_names = [path.name for path in parquet_paths]
     try:
-        for parquet_path in parquet_paths:
-            if file_already_loaded(parquet_path.name, effective_settings) and not overwrite:
-                LOGGER.info(
-                    "Skipping Snowflake load; parquet already audited as copied | file=%s",
+        for trip_type in effective_settings.trip_types:
+            parquet_paths = download_tlc_month_files(effective_settings, trip_type)
+            file_names = [path.name for path in parquet_paths]
+            for parquet_path in parquet_paths:
+                if file_already_loaded(parquet_path.name, trip_type, effective_settings) and not overwrite:
+                    LOGGER.info(
+                        "Skipping Snowflake load; parquet already audited as copied | trip_type=%s | file=%s",
+                        trip_type,
+                        parquet_path.name,
+                    )
+                    continue
+                put_file_to_stage(parquet_path, trip_type, effective_settings)
+                copy_stage_to_raw(effective_settings, trip_type, parquet_path.name)
+                log_load_audit(
                     parquet_path.name,
+                    parquet_path,
+                    trip_type,
+                    effective_settings,
+                    "COPIED" if effective_settings.enable_copy_into else "STAGED_ONLY",
+                    0,
                 )
-                continue
-            put_file_to_stage(parquet_path, effective_settings)
-            copy_stage_to_raw(effective_settings, parquet_path.name)
-            log_load_audit(
-                parquet_path.name,
-                parquet_path,
-                effective_settings,
-                "COPIED" if effective_settings.enable_copy_into else "STAGED_ONLY",
-                0,
+            raw_table = effective_settings.raw_table_for_trip_type(trip_type)
+            raw_count = fetch_scalar(
+                f"SELECT COUNT(*) FROM {raw_table}",
+                settings=effective_settings,
             )
-        raw_count = fetch_scalar(
-            f"SELECT COUNT(*) FROM {effective_settings.raw_table}",
-            settings=effective_settings,
-        )
-        LOGGER.info(
-            "Completed automatic TLC ingestion | raw_table=%s | total_rows=%s | files=%s | window=%s",
-            effective_settings.raw_table,
-            raw_count,
-            len(file_names),
-            effective_settings.processing_window_label,
-        )
+            LOGGER.info(
+                "Completed automatic TLC ingestion | trip_type=%s | raw_table=%s | total_rows=%s | files=%s | window=%s",
+                trip_type,
+                raw_table,
+                raw_count,
+                len(file_names),
+                effective_settings.processing_window_label,
+            )
     except Exception:
         LOGGER.exception(
-            "Automatic TLC ingestion failed | raw_table=%s | window=%s",
-            effective_settings.raw_table,
+            "Automatic TLC ingestion failed | trip_types=%s | window=%s",
+            effective_settings.trip_type_label,
             effective_settings.processing_window_label,
         )
         raise
     finally:
-        for file_name in file_names:
-            try:
-                remove_stage_file(effective_settings, file_name)
-            except Exception:
-                LOGGER.warning("Could not clean staged file %s", file_name)
+        for trip_type in effective_settings.trip_types:
+            for month_start in iter_month_starts(effective_settings):
+                file_name = month_file_name(trip_type, month_start)
+                try:
+                    remove_stage_file(effective_settings, trip_type, file_name)
+                except Exception:
+                    LOGGER.warning("Could not clean staged file %s for %s", file_name, trip_type)
 
 
 def ingest_tlc_month(settings: Settings | None = None, overwrite: bool = True) -> None:
@@ -575,16 +697,20 @@ def bootstrap(settings: Settings | None = None) -> None:
 
 def preview_raw_sample(settings: Settings | None = None) -> None:
     effective_settings = settings or get_settings()
+    raw_union_query = balanced_raw_sample_sql(
+        effective_settings,
+        limit=effective_settings.eda_sample_limit,
+        sample_seed=effective_settings.eda_sample_seed,
+    )
     sample_df = fetch_sample(
-        f"SELECT * FROM {effective_settings.raw_table}",
-        sample_pct=1.0,
+        raw_union_query,
         limit=effective_settings.eda_sample_limit,
         sample_seed=effective_settings.eda_sample_seed,
         settings=effective_settings,
     )
     LOGGER.info(
-        "RAW sample preview for EDA | table=%s | rows=%s | columns=%s",
-        effective_settings.raw_table,
+        "RAW sample preview for EDA | trip_types=%s | rows=%s | columns=%s",
+        effective_settings.trip_type_label,
         len(sample_df),
         list(sample_df.columns),
     )

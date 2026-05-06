@@ -14,24 +14,46 @@ Todo el contrato de features queda restringido a variables conocidas o estimable
 
 La variable de distancia historica `trip_distance` se publica como `estimated_distance` en capas de modelado. Esto permite mantener coherencia entre entrenamiento historico y serving real.
 
-### 4. Arquitectura Snowflake-first
+### 4. `trip_type` como feature explicita
+
+Yellow y Green Taxi comparten el mismo target, pero no necesariamente la misma dinamica tarifaria ni la misma mezcla de rutas. Por eso la flota se modela explicitamente mediante `trip_type` y no solo como separacion operativa en `RAW`.
+
+### 5. Arquitectura Snowflake-first
 
 La limpieza estructural, la OBT y los splits temporales viven en SQL. Pandas y notebooks se reservan para muestra, validacion y experimentacion.
 
-### 5. Split temporal por fechas parametrizadas
+### 6. Split temporal por fechas parametrizadas
 
 La base operativa actual usa fechas configurables desde `.env`. El split final del curso `2015-2023 / 2024 / 2025` se alcanzara cambiando configuracion, no reescribiendo el pipeline.
 
-### 6. Entrenamiento hibrido
+### 7. Entrenamiento hibrido
 
 No todos los modelos soportan `partial_fit`. Por eso el proyecto distingue entre:
 
 - entrenamiento incremental real
 - entrenamiento sobre muestra controlada
 
-### 7. `RAW` append-only por defecto
+### 8. `RAW` append-only por defecto
 
 No se borra `RAW` por defecto. La ingesta debe ser idempotente y registrar archivo, periodo y estado de carga.
+
+### 9. Modelo productivo seleccionado: `gradient_boosting`
+
+Con la evidencia acumulada hasta el `2026-05-05`, `gradient_boosting` pasa a ser el modelo productivo oficial. La razon es pragmatica:
+
+- fue el mejor `val_rmse` completado en `notebooks/temp.txt`
+- no depende de librerias externas opcionales para servir
+- su ruta de entrenamiento y de inferencia queda mas estable para API y frontend
+
+`CatBoost` y otros boosters modernos siguen disponibles para experimentacion, pero no bloquean la salida a produccion mientras su corrida siga siendo inestable a nivel de entorno.
+
+### 10. Separacion formal entre experimentacion y produccion
+
+Desde esta fase:
+
+- `src/models/model_zoo.py` y `src/models/experiment_runner.py` quedan reservados para comparacion experimental
+- `src/models/train_model.py` entrena solo el modelo productivo seleccionado
+- la API carga solo `data/models/nyc_taxi_fare_production.joblib`
 
 ## Limitaciones y Mejoras Posteriores
 

@@ -1,10 +1,12 @@
 import datetime as dt
+import os
 
 import requests
 import streamlit as st
 
-API_URL = "http://127.0.0.1:8000/predict"
-HEALTH_URL = "http://127.0.0.1:8000/health"
+API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
+API_URL = f"{API_BASE_URL}/predict"
+HEALTH_URL = f"{API_BASE_URL}/health"
 
 st.set_page_config(
     page_title="NYC Taxi Fare Predictor",
@@ -212,10 +214,10 @@ with status_col:
 with model_col:
     st.markdown(
         f"""
-        <div class="card">
+            <div class="card">
             <div class="card-title">Modelo Activo</div>
             <div class="card-value">{model_name}</div>
-            <p class="card-copy">Debe existir un artefacto entrenado en <code>MODEL_DIR</code>.</p>
+            <p class="card-copy">La API espera <code>MODEL_DIR/nyc_taxi_fare_production.joblib</code>.</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -241,7 +243,8 @@ with side_col:
     st.markdown(
         """
         - Levanta la API con `uvicorn src.api.main:app --reload`
-        - Confirma que el entrenamiento ya genero un `.joblib`
+        - Ejecuta antes `python3 -m src.models.train_model`
+        - Confirma que existe `nyc_taxi_fare_production.joblib`
         - Usa valores razonables de distancia y zonas
         - Revisa el payload final antes de documentar resultados
         """
@@ -251,6 +254,7 @@ with side_col:
     st.markdown(
         """
         - `pickup_datetime`
+        - `trip_type`
         - `pickup_location_id`
         - `dropoff_location_id`
         - `passenger_count`
@@ -277,6 +281,12 @@ with main_col:
 
         col1, col2 = st.columns(2, gap="large")
         with col1:
+            trip_type = st.selectbox(
+                "Tipo de taxi",
+                options=["yellow", "green"],
+                index=0,
+                help="Se usa como feature categorica para distinguir dinamicas tarifarias entre flotillas.",
+            )
             pickup_date = st.date_input("Fecha de recogida", value=dt.date(2025, 1, 15))
             pickup_time = st.time_input("Hora de recogida", value=dt.time(14, 35))
             pickup_location_id = st.selectbox(
@@ -326,6 +336,7 @@ if not api_ok:
 if submitted:
     pickup_datetime = dt.datetime.combine(pickup_date, pickup_time).strftime("%Y-%m-%d %H:%M:%S")
     payload = {
+        "trip_type": str(trip_type),
         "pickup_datetime": pickup_datetime,
         "pickup_location_id": int(pickup_location_id),
         "dropoff_location_id": int(dropoff_location_id),
@@ -360,6 +371,7 @@ if submitted:
                 st.markdown(
                     f"""
                     - Fecha y hora de pickup: `{pickup_datetime}`
+                    - Tipo de taxi: `{trip_type}`
                     - Distancia estimada: `{estimated_distance:.1f}` millas
                     - Pasajeros: `{passenger_count}`
                     - Modelo: `{model}`

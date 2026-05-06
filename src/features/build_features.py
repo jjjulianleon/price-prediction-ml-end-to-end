@@ -11,11 +11,14 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 TARGET_COLUMN = "fare_amount"
-FEATURE_CONTRACT_VERSION = "v2_estimated_distance"
+FEATURE_CONTRACT_VERSION = "v3_multi_taxi_estimated_distance"
 LEGACY_DISTANCE_COLUMN = "trip_distance"
 DISTANCE_COLUMN = "estimated_distance"
 RAW_SOURCE_COLUMN_MAP = {
     "tpep_pickup_datetime": "pickup_datetime",
+    "lpep_pickup_datetime": "pickup_datetime",
+    "tpep_dropoff_datetime": "dropoff_datetime",
+    "lpep_dropoff_datetime": "dropoff_datetime",
     "vendorid": "vendor_id",
     "ratecodeid": "ratecode_id",
     "pulocationid": "pickup_location_id",
@@ -29,8 +32,10 @@ RAW_FEATURE_COLUMNS = [
     "dropoff_location_id",
     "vendor_id",
     "ratecode_id",
+    "trip_type",
 ]
 MODEL_FEATURE_COLUMNS = [
+    "trip_type",
     "pickup_hour",
     "pickup_dayofweek",
     "pickup_month",
@@ -64,6 +69,7 @@ LEAKAGE_COLUMNS = {
     "avg_speed_mph",
     "tip_pct",
     "fare_per_mile",
+    "dropoff_datetime",
 }
 NUMERIC_FEATURES = [
     "pickup_hour",
@@ -78,6 +84,7 @@ NUMERIC_FEATURES = [
     "same_zone",
 ]
 CATEGORICAL_FEATURES = [
+    "trip_type",
     "pickup_location_id",
     "dropoff_location_id",
     "vendor_id",
@@ -85,6 +92,7 @@ CATEGORICAL_FEATURES = [
     "route_id",
 ]
 DIAGNOSTIC_ONLY_COLUMNS = [
+    "dropoff_datetime",
     "tpep_dropoff_datetime",
     "trip_duration_min",
     "speed_mph",
@@ -133,6 +141,16 @@ def normalize_raw_taxi_frame(df: pd.DataFrame) -> pd.DataFrame:
             if source in normalized.columns and target not in normalized.columns
         }
     )
+    if "trip_type" not in normalized.columns:
+        normalized["trip_type"] = "yellow"
+    normalized["trip_type"] = (
+        normalized["trip_type"]
+        .fillna("yellow")
+        .astype(str)
+        .str.strip()
+        .str.lower()
+        .replace({"": "yellow"})
+    )
     return normalized
 
 
@@ -144,7 +162,7 @@ def raw_quality_mask(
 ) -> pd.Series:
     normalized = normalize_raw_taxi_frame(df)
     pickup_dt = pd.to_datetime(normalized.get("pickup_datetime"), errors="coerce")
-    dropoff_dt = pd.to_datetime(normalized.get("tpep_dropoff_datetime"), errors="coerce")
+    dropoff_dt = pd.to_datetime(normalized.get("dropoff_datetime"), errors="coerce")
     distance = pd.to_numeric(normalized.get(DISTANCE_COLUMN), errors="coerce")
     fare_amount = pd.to_numeric(normalized.get(TARGET_COLUMN), errors="coerce")
     passenger_count = pd.to_numeric(normalized.get("passenger_count"), errors="coerce")
@@ -155,6 +173,7 @@ def raw_quality_mask(
         & (dropoff_dt > pickup_dt)
         & (distance > 0)
         & passenger_count.between(1, 6)
+        & normalized.get("trip_type").isin(["yellow", "green"])
         & normalized.get("pickup_location_id").notna()
         & normalized.get("dropoff_location_id").notna()
     )
@@ -200,6 +219,7 @@ def add_temporal_features(df: pd.DataFrame) -> pd.DataFrame:
     transformed["log_estimated_distance"] = np.log1p(
         pd.to_numeric(transformed[DISTANCE_COLUMN], errors="coerce")
     )
+    transformed["trip_type"] = transformed["trip_type"].astype(str).str.lower()
     transformed["route_id"] = (
         transformed["pickup_location_id"].astype("Int64").astype(str)
         + "_"
@@ -263,7 +283,7 @@ def get_feature_pipeline() -> Pipeline:
     categorical_pipeline = Pipeline(
         steps=[
             ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("encoder", OneHotEncoder(handle_unknown="ignore", sparse_output=False)),
+            ("encoder", OneHotEncoder(handle_unknown="ignore", sparse_output=True)),
         ]
     )
     preprocessor = ColumnTransformer(

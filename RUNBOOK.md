@@ -1,48 +1,44 @@
 # Runbook Operativo
 
-Guia paso a paso para ejecutar, validar y presentar el proyecto final de prediccion de tarifas NYC Yellow Taxi.
+Guia oficial para ejecutar, validar y presentar el proyecto final de prediccion de tarifas NYC TLC Taxi.
 
-## Objetivo de Esta Guia
+## Objetivo
 
-Este documento sirve para tres cosas:
+Este runbook deja una secuencia unica y reproducible para:
 
-1. levantar el pipeline end-to-end sin improvisar comandos
-2. validar que la base de 6 meses funciona correctamente
-3. dejar una secuencia reproducible para que cualquier integrante del grupo pueda continuar
+1. cargar datos en Snowflake
+2. auditar calidad y features
+3. materializar `STAGING`, `OBT` y splits temporales
+4. comparar modelos
+5. publicar el mejor modelo en API y frontend
 
 ## Configuracion Recomendada
 
-La base actual esta preparada para una ventana de `6 meses`:
+La ventana historica oficial del proyecto es configurable desde `.env`. El esquema final esperado por la rubrica es:
 
-- `DATA_START_DATE=2025-01-01`
-- `DATA_END_DATE=2025-06-30`
-- `TRAIN_END_DATE=2025-04-30`
-- `VAL_END_DATE=2025-05-31`
-- `TRAINING_BATCH_GRAIN=month`
+- `train`: 2015-01-01 a 2023-12-31
+- `validation`: 2024-01-01 a 2024-12-31
+- `test`: 2025-01-01 a 2025-12-31
 
-Interpretacion del split:
-
-- `train`: enero a abril
-- `validation`: mayo
-- `test`: junio
-
-Se usa `month` como granularidad por defecto porque es la opcion mas estable para esta primera base operativa. Solo cambia a `week` si despues de medir tiempos o memoria descubres que el lote mensual es demasiado pesado.
+La misma arquitectura puede correrse sobre una ventana mas corta de validacion tecnica sin cambiar el pipeline. Para evitar mezclar objetos, se recomienda usar una base dedicada como `DM_EXP_FINAL_PROJECT`.
 
 ## Paso 0. Preparar Entorno
 
-Desde la raiz del proyecto:
+```bash
+cd /home/pabseb/DataMining/final-project/price-prediction-ml-end-to-end
+source .venv/bin/activate
+```
+
+Si necesitas recrear el entorno:
 
 ```bash
-cd price-prediction-ml-end-to-end
 cp .env.example .env
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Completa `.env` con las credenciales reales de Snowflake antes de seguir.
-
-Variables criticas a revisar:
+Variables criticas:
 
 - `SNOWFLAKE_ACCOUNT`
 - `SNOWFLAKE_USER`
@@ -54,271 +50,239 @@ Variables criticas a revisar:
 - `SNOWFLAKE_SCHEMA_STAGING`
 - `SNOWFLAKE_SCHEMA_ANALYTICS`
 - `SNOWFLAKE_SCHEMA_ML`
+- `DATA_START_DATE`
+- `DATA_END_DATE`
+- `TRAIN_END_DATE`
+- `VAL_END_DATE`
+- `MODEL_DIR`
 - `TRIP_TYPE`
-- `LOCAL_DATA_DIR`
 
-Variables de operacion recomendadas:
+Configuraciones validas de flota:
 
-```env
-ENABLE_DOWNLOAD=true
-ENABLE_STAGE_UPLOAD=true
-ENABLE_COPY_INTO=true
-ENABLE_ZONE_LOOKUP=false
-ZONE_LOOKUP_PATH=data/raw/taxi_zone_lookup.csv
-DATA_START_DATE=2025-01-01
-DATA_END_DATE=2025-06-30
-TRAIN_END_DATE=2025-04-30
-VAL_END_DATE=2025-05-31
-EDA_SAMPLE_LIMIT=10000
-EDA_SAMPLE_SEED=42
-MODEL_TARGET=fare_amount
-TRAIN_SAMPLE_LIMIT=50000
-TRAIN_SAMPLE_PCT=1.0
-BATCH_SIZE=50000
-TRAINING_BATCH_GRAIN=month
-MODEL_DIR=data/models
-```
+- `TRIP_TYPE=yellow`: ingesta solo Yellow Taxi
+- `TRIP_TYPE=green`: ingesta solo Green Taxi
+- `TRIP_TYPE=yellow,green`: ingesta ambas flotas y las integra en la OBT con `trip_type` como feature
 
-## Paso 1. Ingestar Solo RAW
-
-Ejecuta:
+## Paso 1. Setup e Ingesta RAW
 
 ```bash
 python3 -m src.data.ingestion bootstrap_raw
 ```
 
-Que hace internamente:
+Esto crea esquemas y objetos base, descarga los parquet configurados y carga `RAW.YELLOW_TRIPS_DEV`, `RAW_TEST.GREEN_TRIPS_DEV` o ambos segun `TRIP_TYPE`, cada uno con su propia auditoria `RAW_LOAD_AUDIT`.
 
-1. crea esquemas y objetos base en Snowflake
-2. descarga todos los parquets mensuales de la ventana configurada
-3. sube cada archivo al stage interno
-4. ejecuta `COPY INTO` hacia `RAW.YELLOW_TRIPS_DEV`
-5. registra auditoria minima de carga en `RAW.RAW_LOAD_AUDIT`
-6. deja disponible la base raw para trabajar `EDA`, `cleaning` y `feature engineering` sin depender todavia de la OBT
-
-Notas operativas importantes:
-
-- `RAW` no se trunca por defecto
-- los archivos ya descargados o auditados se saltan salvo que fuerces `overwrite`
-- `ENABLE_ZONE_LOOKUP=false` mantiene el flujo base activo sin enriquecimiento geografico opcional
-
-Que debes validar en logs:
-
-- `raw_rows`
-
-## Paso 2. Validar RAW y Auditar la Ingesta
-
-Corre estas consultas:
+Validacion minima en Snowflake:
 
 ```sql
-SELECT COUNT(*) FROM DM_FINAL_PROJECT.RAW.YELLOW_TRIPS_DEV;
-SELECT COUNT(*) FROM DM_FINAL_PROJECT.RAW.RAW_LOAD_AUDIT;
-```
+SELECT COUNT(*) FROM DM_EXP_FINAL_PROJECT.RAW_TEST.YELLOW_TRIPS_DEV;
+SELECT COUNT(*) FROM DM_EXP_FINAL_PROJECT.RAW_TEST.RAW_LOAD_AUDIT;
 
-Chequeos temporales recomendados:
+SELECT COUNT(*) FROM DM_EXP_FINAL_PROJECT.RAW_TEST.GREEN_TRIPS_DEV;
+SELECT COUNT(*) FROM DM_EXP_FINAL_PROJECT.RAW_TEST.RAW_LOAD_AUDIT;
 
-```sql
 SELECT MIN(tpep_pickup_datetime), MAX(tpep_pickup_datetime)
-FROM DM_FINAL_PROJECT.RAW.YELLOW_TRIPS_DEV;
+FROM DM_EXP_FINAL_PROJECT.RAW_TEST.YELLOW_TRIPS_DEV;
 ```
 
-Esperado:
-
-- `RAW` con filas mayores a cero
-- `RAW_LOAD_AUDIT` con una fila por archivo procesado
-- fechas contenidas dentro de la ventana configurada
-
-Para revisar rapidamente una muestra raw desde terminal:
+Muestra rapida desde terminal:
 
 ```bash
 python3 -m src.data.ingestion sample_raw
 ```
 
-## Paso 3. Trabajar EDA, Cleaning y Feature Engineering Sobre RAW
+## Paso 2. EDA, Cleaning y Feature Engineering
 
-Corre en este orden:
+Corre los notebooks en este orden:
 
 1. `notebooks/01_eda.ipynb`
 2. `notebooks/02_data_cleaning.ipynb`
 3. `notebooks/03_feature_engineering.ipynb`
 
-Qué debe probar cada notebook:
+Qué validar:
 
-- `01_eda`: EDA descriptivo global sobre muestra de `RAW`, con leakage visible e identificacion de problemas estructurales
-- `02_data_cleaning`: reglas estructurales sobre `RAW` y medicion del impacto de los filtros antes de llevarlos a SQL
-- `03_feature_engineering`: contrato candidato seguro con `estimated_distance`, derivadas deterministicas y frontera clara contra leakage, todavia sin depender de OBT
+- `01_eda`: estructura raw, leakage visible, distribuciones y outliers
+- si `TRIP_TYPE=yellow,green`, revisar diferencias descriptivas por `trip_type`
+- `02_data_cleaning`: impacto de reglas de calidad y ejemplos invalidos
+- `03_feature_engineering`: contrato final de features, derivadas y compatibilidad con el pipeline reusable
 
-Resultado esperado de esta etapa:
+Resultado esperado:
 
-- una lista clara de reglas de limpieza
-- una muestra candidata de modelado ya filtrada
-- un contrato de features aprobado para automatizar en `STAGING/OBT`
+- reglas de limpieza cerradas
+- contrato de features aprobado
+- evidencia suficiente para automatizar `STAGING/OBT`
 
-## Paso 4. Materializar STAGING, OBT y Splits
-
-Una vez cerradas las reglas y el contrato de features, ejecuta:
+## Paso 3. Materializar STAGING, OBT y Splits
 
 ```bash
 python3 -m src.data.ingestion transform
 ```
 
-Que hace esta etapa:
+Esto ejecuta:
 
-1. crea `STAGING.TRIPS_STAGE_DEV`
-2. crea `ANALYTICS.OBT_TRIPS_DEV`
-3. crea `ML.TRAIN_SET_DEV`, `ML.VAL_SET_DEV` y `ML.TEST_SET_DEV`
-4. imprime conteos y diagnosticos de filtros
+- `02_create_staging_trips_dev.sql`
+- `03_create_obt_trips_dev.sql`
+- `04_create_time_splits_dev.sql`
 
-Valida luego:
+Si prefieres correrlo manualmente en Snowflake Worksheet, ejecuta esos tres scripts en ese mismo orden.
+
+Validacion minima:
 
 ```sql
-SELECT COUNT(*) FROM DM_FINAL_PROJECT.STAGING.TRIPS_STAGE_DEV;
-SELECT COUNT(*) FROM DM_FINAL_PROJECT.ANALYTICS.OBT_TRIPS_DEV;
-SELECT COUNT(*) FROM DM_FINAL_PROJECT.ML.TRAIN_SET_DEV;
-SELECT COUNT(*) FROM DM_FINAL_PROJECT.ML.VAL_SET_DEV;
-SELECT COUNT(*) FROM DM_FINAL_PROJECT.ML.TEST_SET_DEV;
+SELECT COUNT(*) FROM DM_EXP_FINAL_PROJECT.STAGING_TEST.TRIPS_STAGE_DEV;
+SELECT COUNT(*) FROM DM_EXP_FINAL_PROJECT.ANALYTICS_TEST.OBT_TRIPS_DEV;
+SELECT COUNT(*) FROM DM_EXP_FINAL_PROJECT.ML_TEST.TRAIN_SET_DEV;
+SELECT COUNT(*) FROM DM_EXP_FINAL_PROJECT.ML_TEST.VAL_SET_DEV;
+SELECT COUNT(*) FROM DM_EXP_FINAL_PROJECT.ML_TEST.TEST_SET_DEV;
+
+SELECT MIN(pickup_datetime), MAX(pickup_datetime)
+FROM DM_EXP_FINAL_PROJECT.ML_TEST.TRAIN_SET_DEV;
+
+SELECT MIN(pickup_datetime), MAX(pickup_datetime)
+FROM DM_EXP_FINAL_PROJECT.ML_TEST.VAL_SET_DEV;
+
+SELECT MIN(pickup_datetime), MAX(pickup_datetime)
+FROM DM_EXP_FINAL_PROJECT.ML_TEST.TEST_SET_DEV;
 ```
 
-Y si quieres una vista rapida de la OBT:
+Vista rapida de la OBT:
 
 ```bash
 python3 -m src.data.ingestion sample_obt
 ```
 
-## Paso 5. Revisar Model Experimentation y Entrenar
+## Paso 4. Experimentacion de Modelos
 
-Primero corre:
+Corre primero el notebook:
 
 1. `notebooks/04_model_experimentation.ipynb`
 
-Luego ejecuta:
+Que cambia en esta version:
+
+- cada modelo del shortlist corre en su propia celda
+- el notebook guarda progreso en `data/models/notebook04_progress.csv`
+- el `model_zoo` queda solo para experimentacion; ya no define el artefacto productivo
+
+Qué revisar:
+
+- `comparison`
+- `val_rmse`
+- `test_rmse`
+- `notebook04_progress.csv`
+
+La seleccion final se hace por `validation`. `test` queda reservado para verificacion final.
+
+Como referencia actual, el log `notebooks/temp.txt` ya deja suficiente evidencia para promover `gradient_boosting` a produccion mientras `catboost` siga inconcluso por estabilidad de entorno.
+
+Opcional desde terminal:
+
+```bash
+python3 -m src.models.experiment_runner
+```
+
+## Paso 5. Entrenamiento Productivo Final
+
+Entrena solo el modelo seleccionado para serving:
 
 ```bash
 python3 -m src.models.train_model
 ```
 
-Modelos esperados:
+Resultado esperado:
 
-- `DummyRegressor`
-- `SGDRegressor`
-- `RandomForestRegressor`
-- `AdaBoostRegressor`
-- `GradientBoostingRegressor`
-- `HistGradientBoostingRegressor`
-- `XGBoost`
-- `LightGBM`
-- `CatBoost`
-- `Bagging`
-- `Pasting`
-- `Voting`
+- artefacto fijo en `data/models/nyc_taxi_fare_production.joblib`
+- metricas de `validation` y `test` del modelo productivo
+- metadata de contrato y evidencia de seleccion dentro del artefacto
 
-Qué debes revisar en salida:
-
-- tabla comparativa con `training_strategy`
-- `val_rmse`
-- `test_rmse`
-- nombre del modelo ganador
-- ruta del artefacto guardado
-- `feature_audit`
-- `zone_lookup_enabled`
-- `unavailable_required_models` vacio
-
-Interpretacion correcta:
-
-- el modelo se elige por `validation`, no por `test`
-- `test` se usa solo como evaluacion final
-- si `SGDRegressor` gana o compite bien, confirma que la ruta incremental funciona
-- si gana otro modelo, igual debes poder justificar por que el costo computacional vale la pena
-
-## Paso 6. Ejecutar Tests
-
-Ejecuta:
+## Paso 6. Pruebas del Proyecto
 
 ```bash
 python3 -m pytest
 ```
 
-La suite debe validar:
+La suite debe quedar en verde y cubrir:
 
-- configuracion y parseo de entorno
-- presencia de documentos clave y enlaces del README
+- configuracion
+- contrato de features
 - proteccion minima contra leakage
-- consistencia del pipeline de features
-- entrenamiento mock sin depender de Snowflake real
+- documentacion obligatoria
+- entrenamiento mock sin Snowflake real
 
-## Paso 7. Levantar la API
+## Paso 7. Publicar API y Frontend
 
-Ejecuta:
+API:
 
 ```bash
 uvicorn src.api.main:app --reload
 ```
 
-Prueba minima:
+Health check:
 
 ```bash
 curl http://127.0.0.1:8000/health
 ```
 
-Esperado:
-
-- `status=ok`
-- `model_loaded=true`
-- `model_name` con el nombre del artefacto entrenado
-
-## Paso 8. Levantar Streamlit
-
-En otra terminal, con el mismo entorno activado:
+Frontend:
 
 ```bash
 streamlit run app/frontend.py
 ```
 
-Chequeos minimos:
+Verificaciones minimas:
 
-- la app carga sin error
-- muestra el estado de la API
-- permite ingresar los campos del viaje
-- devuelve una tarifa estimada
-- muestra el payload enviado y el modelo usado
+- la API levanta y detecta `nyc_taxi_fare_production.joblib`
+- Streamlit consume la API sin errores
+- una prediccion manual devuelve tarifa y nombre del modelo
 
-## Validacion End-to-End Recomendada
+## Paso 8. Opcion Recomendada Con Docker Compose
 
-Secuencia minima para confirmar que todo funciona:
+Si quieres levantar backend y frontend de forma consistente, usa Docker Compose. En esta version, Docker se usa solo para la app ya servida; el entrenamiento final ocurre fuera de contenedor.
 
-1. `python3 -m src.data.ingestion bootstrap_raw`
-2. validar `RAW` y `RAW_LOAD_AUDIT`
-3. correr `01_eda` a `03_feature_engineering`
-4. ejecutar `python3 -m src.data.ingestion transform`
-5. validar `STAGING/OBT/ML`
-6. correr `04_model_experimentation`
-7. correr `python3 -m src.models.train_model`
-8. correr `python3 -m pytest`
-9. levantar `uvicorn`
-10. levantar `streamlit`
-11. hacer una prediccion manual desde la UI
+Primero entrena el artefacto productivo en tu entorno local:
+
+```bash
+python3 -m src.models.train_model
+```
+
+Luego levanta API y frontend:
+
+```bash
+docker compose up --build
+```
+
+Puertos esperados:
+
+- API: `http://127.0.0.1:8000`
+- Frontend: `http://127.0.0.1:8501`
+
+Notas operativas:
+
+- el frontend usa `API_BASE_URL=http://api:8000` dentro de la red de Compose
+- el artefacto productivo se persiste en `./data/models`
+- Compose asume que ya existe `./data/models/nyc_taxi_fare_production.joblib`
+- si cambias el modelo y reentrenas, reinicia Compose para que la app cargue el nuevo artefacto
+
+## Secuencia Recomendada Completa
+
+```bash
+python3 -m src.data.ingestion bootstrap_raw
+python3 -m src.data.ingestion sample_raw
+# correr notebooks 01, 02, 03
+python3 -m src.data.ingestion transform
+python3 -m src.data.ingestion sample_obt
+# correr notebook 04
+python3 -m src.models.train_model
+python3 -m pytest
+uvicorn src.api.main:app --reload
+streamlit run app/frontend.py
+```
 
 ## Criterios de Aceptacion
 
-Puedes considerar esta base operativa como valida si se cumple todo esto:
+El proyecto puede considerarse listo para presentacion cuando:
 
-- la ingesta cubre los 6 meses configurados
-- los notebooks `01-03` pueden correrse usando solo muestra de `RAW`
-- la OBT no contiene columnas de leakage en el contrato de modelado
-- el contrato publico usa `estimated_distance` fuera de `RAW`
-- los splits estan bien separados en el tiempo
-- el entrenamiento genera comparacion completa de modelos
-- las dependencias requeridas estan instaladas
-- los tests quedan en verde
-- la API responde
-- el frontend consume la API correctamente
-
-## Siguientes Mejoras Despues de Esta Base
-
-Cuando esta ventana de 6 meses quede estable, lo correcto es:
-
-1. extender exactamente el mismo pipeline al rango historico completo
-2. medir tiempos reales de bootstrap y entrenamiento
-3. ajustar `TRAIN_SAMPLE_LIMIT` y `BATCH_SIZE` con evidencia
-4. enriquecer features solo si no rompen la regla de no leakage
-5. cerrar la defensa con tablas finales de RMSE y decisiones justificadas
+- `RAW`, `STAGING`, `ANALYTICS` y `ML` quedan pobladas en Snowflake
+- el contrato final usa `estimated_distance` y excluye leakage
+- los splits temporales respetan el corte configurado
+- existe benchmark del shortlist con metricas comparables
+- el modelo productivo queda guardado en `MODEL_DIR/nyc_taxi_fare_production.joblib`
+- API y frontend funcionan sobre ese artefacto

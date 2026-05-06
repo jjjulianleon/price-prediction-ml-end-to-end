@@ -7,6 +7,7 @@ El contrato oficial de modelado aplica a las capas `STAGING`, `ANALYTICS` y `ML`
 | Columna | Tipo esperado | Rol | Feature | Disponible pre-viaje | Riesgo de leakage | Regla de calidad | Accion ante invalido |
 | :-- | :-- | :-- | :--: | :--: | :-- | :-- | :-- |
 | `pickup_datetime` | timestamp | tiempo base | si | si | bajo | no nulo, dentro del periodo | descartar fila |
+| `trip_type` | string | flota (`yellow` o `green`) | si | si | bajo | valor en catalogo permitido | imputar a `yellow` en serving legacy o descartar si invalido en training |
 | `pickup_location_id` | int | zona origen | si | si | bajo | no nulo | descartar fila |
 | `dropoff_location_id` | int | zona destino | si | si | bajo | no nulo | descartar fila |
 | `passenger_count` | int | demanda declarada | si | si | bajo | rango razonable `1..6` | descartar fila |
@@ -58,3 +59,4 @@ No pueden entrar al modelo final:
 - `trip_distance` se conserva en `RAW`
 - `ANALYTICS` puede exponer temporalmente un alias de compatibilidad para notebooks legacy
 - el contrato oficial del pipeline y del serving usa `estimated_distance`
+- el contrato oficial incorpora `trip_type` como feature categorica para capturar diferencias estructurales entre flotas

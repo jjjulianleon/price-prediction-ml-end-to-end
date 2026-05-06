@@ -2,11 +2,12 @@
 
 ## Version de contrato
 
-- `feature_contract_version`: `v2_estimated_distance`
+- `feature_contract_version`: `v3_multi_taxi_estimated_distance`
 
 ## Features aprobadas de entrada
 
 - `pickup_datetime`
+- `trip_type`
 - `passenger_count`
 - `estimated_distance`
 - `pickup_location_id`
@@ -68,3 +69,8 @@ Cuando se active `ENABLE_ZONE_LOOKUP=true` y exista lookup cargado, se podran ev
 - `dropoff_is_airport`
 
 Esas variables no forman parte del contrato base actual.
+
+## Nota Multi-Fleet
+
+- `trip_type` forma parte del set oficial y entra al preprocesamiento como variable categorica.
+- si `TRIP_TYPE=yellow,green`, el EDA y la experimentacion deben reportar comparativas por flota.
