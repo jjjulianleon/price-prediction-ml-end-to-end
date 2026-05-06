@@ -23,6 +23,7 @@ from src.features.build_features import (
 def sample_dataframe() -> pd.DataFrame:
     return pd.DataFrame(
         {
+            "trip_type": ["yellow", "green"],
             "pickup_datetime": ["2025-01-03 08:15:00", "2025-01-26 17:45:00"],
             "passenger_count": [1, 2],
             DISTANCE_COLUMN: [1.5, 7.2],
@@ -46,6 +47,7 @@ def test_prepare_feature_frame_creates_temporal_features():
     features = prepare_feature_frame(sample_dataframe().drop(columns=[TARGET_COLUMN]))
 
     assert list(features.columns) == MODEL_FEATURE_COLUMNS
+    assert features["trip_type"].tolist() == ["yellow", "green"]
     assert features["pickup_hour"].tolist() == [8, 17]
     assert features["pickup_month"].tolist() == [1, 1]
     assert "log_estimated_distance" in features.columns
@@ -89,6 +91,7 @@ def test_normalize_raw_taxi_frame_maps_raw_schema():
     normalized = normalize_raw_taxi_frame(raw_df)
 
     assert "pickup_datetime" in normalized.columns
+    assert "dropoff_datetime" in normalized.columns
     assert DISTANCE_COLUMN in normalized.columns
     assert normalized.loc[0, "pickup_location_id"] == 161
 
@@ -98,6 +101,7 @@ def test_build_candidate_modeling_frame_filters_invalid_rows():
         {
             "tpep_pickup_datetime": ["2025-01-03 08:15:00", "2025-01-04 09:00:00"],
             "tpep_dropoff_datetime": ["2025-01-03 08:35:00", "2025-01-04 08:55:00"],
+            "trip_type": ["yellow", "green"],
             "trip_distance": [1.5, 2.0],
             "passenger_count": [2, 1],
             "vendorid": [1, 2],
@@ -118,3 +122,4 @@ def test_build_candidate_modeling_frame_filters_invalid_rows():
     assert mask.tolist() == [True, False]
     assert len(filtered) == 1
     assert filtered.iloc[0][DISTANCE_COLUMN] == 1.5
+    assert filtered.iloc[0]["trip_type"] == "yellow"

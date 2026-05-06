@@ -1,0 +1,320 @@
+2026-05-10 05:45:56,673 | INFO | Starting production training | model=gradient_boosting | strategy=sample | matrix_format=dense
+2026-05-10 05:45:56,673 | INFO | Training config | requested_sample_limit=10000000 | effective_sample_limit=20000 | sample_pct=1.0 | requested_batch_size=200000 | effective_batch_size=5000 | grain=month | trip_types=yellow,green
+2026-05-10 05:45:56,673 | INFO | Split ranges | train=2015-01-01..2023-12-31 | validation=2024-01-01..2024-12-31 | test=2025-01-01..2025-12-31
+2026-05-10 05:46:44,031 | INFO | Fetched train sample | rows=20,000
+2026-05-10 05:46:44,132 | INFO | Preprocessor fitted | elapsed=0.1s
+2026-05-10 05:46:44,313 | INFO | Fit input materialized | shape=(20000, 5032)
+2026-05-10 05:56:07,734 | INFO | Model fit completed | elapsed=563.6s
+2026-05-10 05:56:07,735 | INFO | Evaluating validation | matrix_format=dense | batch_size=5000
+2026-05-10 05:56:07,735 | INFO | validation window 1: 2024-01-01 -> 2024-01-31
+2026-05-10 05:56:45,450 | INFO | validation batches=5 in current window
+2026-05-10 05:56:53,425 | INFO | validation batches=10 in current window
+2026-05-10 05:57:10,014 | INFO | validation batches=15 in current window
+2026-05-10 05:57:12,543 | INFO | validation batches=20 in current window
+2026-05-10 05:57:27,535 | INFO | validation batches=25 in current window
+2026-05-10 05:57:44,118 | INFO | validation batches=30 in current window
+2026-05-10 05:57:56,136 | INFO | validation batches=35 in current window
+2026-05-10 05:58:01,795 | INFO | validation batches=40 in current window
+2026-05-10 05:58:18,985 | INFO | validation batches=45 in current window
+2026-05-10 05:58:31,124 | INFO | validation batches=50 in current window
+2026-05-10 05:58:37,293 | INFO | validation batches=55 in current window
+2026-05-10 05:58:52,882 | INFO | validation window 2: 2024-02-01 -> 2024-02-29
+2026-05-10 05:59:30,258 | INFO | validation batches=5 in current window
+2026-05-10 05:59:38,445 | INFO | validation batches=10 in current window
+2026-05-10 05:59:55,235 | INFO | validation batches=15 in current window
+2026-05-10 05:59:57,460 | INFO | validation batches=20 in current window
+2026-05-10 06:00:13,602 | INFO | validation batches=25 in current window
+2026-05-10 06:00:25,702 | INFO | validation batches=30 in current window
+2026-05-10 06:00:31,143 | INFO | validation batches=35 in current window
+2026-05-10 06:00:48,347 | INFO | validation batches=40 in current window
+2026-05-10 06:01:00,370 | INFO | validation batches=45 in current window
+2026-05-10 06:01:05,911 | INFO | validation batches=50 in current window
+2026-05-10 06:01:20,920 | INFO | validation batches=55 in current window
+2026-05-10 06:01:37,049 | INFO | validation batches=60 in current window
+2026-05-10 06:01:37,455 | INFO | validation window 3: 2024-03-01 -> 2024-03-31
+2026-05-10 06:02:14,830 | INFO | validation batches=5 in current window
+2026-05-10 06:02:23,442 | INFO | validation batches=10 in current window
+2026-05-10 06:02:40,218 | INFO | validation batches=15 in current window
+2026-05-10 06:02:42,430 | INFO | validation batches=20 in current window
+2026-05-10 06:02:59,050 | INFO | validation batches=25 in current window
+2026-05-10 06:03:11,165 | INFO | validation batches=30 in current window
+2026-05-10 06:03:17,459 | INFO | validation batches=35 in current window
+2026-05-10 06:03:34,768 | INFO | validation batches=40 in current window
+2026-05-10 06:03:37,237 | INFO | validation batches=45 in current window
+2026-05-10 06:03:53,779 | INFO | validation batches=50 in current window
+2026-05-10 06:04:10,826 | INFO | validation batches=55 in current window
+2026-05-10 06:04:13,332 | INFO | validation batches=60 in current window
+2026-05-10 06:04:31,220 | INFO | validation window 4: 2024-04-01 -> 2024-04-30
+2026-05-10 06:05:08,163 | INFO | validation batches=5 in current window
+2026-05-10 06:05:16,125 | INFO | validation batches=10 in current window
+2026-05-10 06:05:33,670 | INFO | validation batches=15 in current window
+2026-05-10 06:05:35,630 | INFO | validation batches=20 in current window
+2026-05-10 06:05:53,125 | INFO | validation batches=25 in current window
+2026-05-10 06:06:05,282 | INFO | validation batches=30 in current window
+2026-05-10 06:06:11,279 | INFO | validation batches=35 in current window
+2026-05-10 06:06:28,554 | INFO | validation batches=40 in current window
+2026-05-10 06:06:31,005 | INFO | validation batches=45 in current window
+2026-05-10 06:06:46,688 | INFO | validation batches=50 in current window
+2026-05-10 06:07:03,443 | INFO | validation batches=55 in current window
+2026-05-10 06:07:06,007 | INFO | validation batches=60 in current window
+2026-05-10 06:07:23,445 | INFO | validation window 5: 2024-05-01 -> 2024-05-31
+2026-05-10 06:08:00,785 | INFO | validation batches=5 in current window
+2026-05-10 06:08:10,127 | INFO | validation batches=10 in current window
+2026-05-10 06:08:26,926 | INFO | validation batches=15 in current window
+2026-05-10 06:08:29,964 | INFO | validation batches=20 in current window
+2026-05-10 06:08:47,303 | INFO | validation batches=25 in current window
+2026-05-10 06:08:59,443 | INFO | validation batches=30 in current window
+2026-05-10 06:09:06,731 | INFO | validation batches=35 in current window
+2026-05-10 06:09:24,852 | INFO | validation batches=40 in current window
+2026-05-10 06:09:27,232 | INFO | validation batches=45 in current window
+2026-05-10 06:09:43,635 | INFO | validation batches=50 in current window
+2026-05-10 06:10:00,634 | INFO | validation batches=55 in current window
+2026-05-10 06:10:03,415 | INFO | validation batches=60 in current window
+2026-05-10 06:10:21,817 | INFO | validation window 6: 2024-06-01 -> 2024-06-30
+2026-05-10 06:10:58,982 | INFO | validation batches=5 in current window
+2026-05-10 06:11:07,470 | INFO | validation batches=10 in current window
+2026-05-10 06:11:24,364 | INFO | validation batches=15 in current window
+2026-05-10 06:11:25,916 | INFO | validation batches=20 in current window
+2026-05-10 06:11:42,730 | INFO | validation batches=25 in current window
+2026-05-10 06:11:54,894 | INFO | validation batches=30 in current window
+2026-05-10 06:12:00,925 | INFO | validation batches=35 in current window
+2026-05-10 06:12:18,433 | INFO | validation batches=40 in current window
+2026-05-10 06:12:21,458 | INFO | validation batches=45 in current window
+2026-05-10 06:12:36,379 | INFO | validation batches=50 in current window
+2026-05-10 06:12:53,161 | INFO | validation batches=55 in current window
+2026-05-10 06:12:55,601 | INFO | validation batches=60 in current window
+2026-05-10 06:13:14,126 | INFO | validation window 7: 2024-07-01 -> 2024-07-31
+2026-05-10 06:13:51,616 | INFO | validation batches=5 in current window
+2026-05-10 06:13:59,100 | INFO | validation batches=10 in current window
+2026-05-10 06:14:16,004 | INFO | validation batches=15 in current window
+2026-05-10 06:14:18,131 | INFO | validation batches=20 in current window
+2026-05-10 06:14:33,976 | INFO | validation batches=25 in current window
+2026-05-10 06:14:46,825 | INFO | validation batches=30 in current window
+2026-05-10 06:14:52,529 | INFO | validation batches=35 in current window
+2026-05-10 06:15:07,639 | INFO | validation batches=40 in current window
+2026-05-10 06:15:23,525 | INFO | validation batches=45 in current window
+2026-05-10 06:15:26,037 | INFO | validation batches=50 in current window
+2026-05-10 06:15:41,043 | INFO | validation batches=55 in current window
+2026-05-10 06:15:57,898 | INFO | validation window 8: 2024-08-01 -> 2024-08-31
+2026-05-10 06:16:35,224 | INFO | validation batches=5 in current window
+2026-05-10 06:16:41,948 | INFO | validation batches=10 in current window
+2026-05-10 06:16:57,827 | INFO | validation batches=15 in current window
+2026-05-10 06:17:09,921 | INFO | validation batches=20 in current window
+2026-05-10 06:17:15,093 | INFO | validation batches=25 in current window
+2026-05-10 06:17:32,346 | INFO | validation batches=30 in current window
+2026-05-10 06:17:45,298 | INFO | validation batches=35 in current window
+2026-05-10 06:17:50,522 | INFO | validation batches=40 in current window
+2026-05-10 06:18:06,731 | INFO | validation batches=45 in current window
+2026-05-10 06:18:19,061 | INFO | validation batches=50 in current window
+2026-05-10 06:18:24,815 | INFO | validation batches=55 in current window
+2026-05-10 06:18:40,794 | INFO | validation window 9: 2024-09-01 -> 2024-09-30
+2026-05-10 06:19:17,705 | INFO | validation batches=5 in current window
+2026-05-10 06:19:27,036 | INFO | validation batches=10 in current window
+2026-05-10 06:19:43,863 | INFO | validation batches=15 in current window
+2026-05-10 06:19:45,940 | INFO | validation batches=20 in current window
+2026-05-10 06:20:02,762 | INFO | validation batches=25 in current window
+2026-05-10 06:20:14,830 | INFO | validation batches=30 in current window
+2026-05-10 06:20:21,245 | INFO | validation batches=35 in current window
+2026-05-10 06:20:38,867 | INFO | validation batches=40 in current window
+2026-05-10 06:20:42,166 | INFO | validation batches=45 in current window
+2026-05-10 06:20:56,947 | INFO | validation batches=50 in current window
+2026-05-10 06:21:13,849 | INFO | validation batches=55 in current window
+2026-05-10 06:21:16,098 | INFO | validation batches=60 in current window
+2026-05-10 06:21:33,543 | INFO | validation window 10: 2024-10-01 -> 2024-10-31
+2026-05-10 06:22:10,982 | INFO | validation batches=5 in current window
+2026-05-10 06:22:20,145 | INFO | validation batches=10 in current window
+2026-05-10 06:22:36,778 | INFO | validation batches=15 in current window
+2026-05-10 06:22:40,288 | INFO | validation batches=20 in current window
+2026-05-10 06:22:58,189 | INFO | validation batches=25 in current window
+2026-05-10 06:23:10,289 | INFO | validation batches=30 in current window
+2026-05-10 06:23:17,261 | INFO | validation batches=35 in current window
+2026-05-10 06:23:35,351 | INFO | validation batches=40 in current window
+2026-05-10 06:23:37,774 | INFO | validation batches=45 in current window
+2026-05-10 06:23:54,600 | INFO | validation batches=50 in current window
+2026-05-10 06:24:11,299 | INFO | validation batches=55 in current window
+2026-05-10 06:24:15,087 | INFO | validation batches=60 in current window
+2026-05-10 06:24:33,356 | INFO | validation window 11: 2024-11-01 -> 2024-11-30
+2026-05-10 06:25:10,868 | INFO | validation batches=5 in current window
+2026-05-10 06:25:19,615 | INFO | validation batches=10 in current window
+2026-05-10 06:25:36,398 | INFO | validation batches=15 in current window
+2026-05-10 06:25:39,540 | INFO | validation batches=20 in current window
+2026-05-10 06:25:56,442 | INFO | validation batches=25 in current window
+2026-05-10 06:26:08,497 | INFO | validation batches=30 in current window
+2026-05-10 06:26:15,011 | INFO | validation batches=35 in current window
+2026-05-10 06:26:32,236 | INFO | validation batches=40 in current window
+2026-05-10 06:26:35,692 | INFO | validation batches=45 in current window
+2026-05-10 06:26:51,642 | INFO | validation batches=50 in current window
+2026-05-10 06:27:08,384 | INFO | validation batches=55 in current window
+2026-05-10 06:27:11,240 | INFO | validation batches=60 in current window
+2026-05-10 06:27:28,911 | INFO | validation window 12: 2024-12-01 -> 2024-12-31
+2026-05-10 06:28:06,149 | INFO | validation batches=5 in current window
+2026-05-10 06:28:15,597 | INFO | validation batches=10 in current window
+2026-05-10 06:28:32,794 | INFO | validation batches=15 in current window
+2026-05-10 06:28:35,968 | INFO | validation batches=20 in current window
+2026-05-10 06:28:53,803 | INFO | validation batches=25 in current window
+2026-05-10 06:29:05,873 | INFO | validation batches=30 in current window
+2026-05-10 06:29:13,037 | INFO | validation batches=35 in current window
+2026-05-10 06:29:31,369 | INFO | validation batches=40 in current window
+2026-05-10 06:29:33,916 | INFO | validation batches=45 in current window
+2026-05-10 06:29:49,726 | INFO | validation batches=50 in current window
+2026-05-10 06:30:06,358 | INFO | validation batches=55 in current window
+2026-05-10 06:30:08,581 | INFO | validation batches=60 in current window
+2026-05-10 06:30:28,941 | INFO | Completed validation | rows=36,148,221 | rmse=56.4458 | elapsed=2061.2s
+2026-05-10 06:30:28,981 | INFO | Evaluating test | matrix_format=dense | batch_size=5000
+2026-05-10 06:30:28,982 | INFO | test window 1: 2025-01-01 -> 2025-01-31
+2026-05-10 06:31:06,516 | INFO | test batches=5 in current window
+2026-05-10 06:31:14,238 | INFO | test batches=10 in current window
+2026-05-10 06:31:31,048 | INFO | test batches=15 in current window
+2026-05-10 06:31:32,784 | INFO | test batches=20 in current window
+2026-05-10 06:31:48,728 | INFO | test batches=25 in current window
+2026-05-10 06:32:05,519 | INFO | test batches=30 in current window
+2026-05-10 06:32:06,843 | INFO | test batches=35 in current window
+2026-05-10 06:32:24,414 | INFO | test batches=40 in current window
+2026-05-10 06:32:36,607 | INFO | test batches=45 in current window
+2026-05-10 06:32:42,821 | INFO | test batches=50 in current window
+2026-05-10 06:32:59,850 | INFO | test batches=55 in current window
+2026-05-10 06:33:02,294 | INFO | test batches=60 in current window
+2026-05-10 06:33:16,807 | INFO | test window 2: 2025-02-01 -> 2025-02-28
+2026-05-10 06:33:53,951 | INFO | test batches=5 in current window
+2026-05-10 06:34:01,279 | INFO | test batches=10 in current window
+2026-05-10 06:34:17,318 | INFO | test batches=15 in current window
+2026-05-10 06:34:29,362 | INFO | test batches=20 in current window
+2026-05-10 06:34:34,919 | INFO | test batches=25 in current window
+2026-05-10 06:34:50,364 | INFO | test batches=30 in current window
+2026-05-10 06:35:06,871 | INFO | test batches=35 in current window
+2026-05-10 06:35:10,153 | INFO | test batches=40 in current window
+2026-05-10 06:35:23,696 | INFO | test batches=45 in current window
+2026-05-10 06:35:40,343 | INFO | test batches=50 in current window
+2026-05-10 06:35:50,950 | INFO | test batches=55 in current window
+2026-05-10 06:35:58,415 | INFO | test window 3: 2025-03-01 -> 2025-03-31
+2026-05-10 06:36:36,391 | INFO | test batches=5 in current window
+2026-05-10 06:36:44,794 | INFO | test batches=10 in current window
+2026-05-10 06:37:01,603 | INFO | test batches=15 in current window
+2026-05-10 06:37:04,113 | INFO | test batches=20 in current window
+2026-05-10 06:37:20,867 | INFO | test batches=25 in current window
+2026-05-10 06:37:32,931 | INFO | test batches=30 in current window
+2026-05-10 06:37:39,218 | INFO | test batches=35 in current window
+2026-05-10 06:37:57,046 | INFO | test batches=40 in current window
+2026-05-10 06:37:59,889 | INFO | test batches=45 in current window
+2026-05-10 06:38:15,652 | INFO | test batches=50 in current window
+2026-05-10 06:38:32,529 | INFO | test batches=55 in current window
+2026-05-10 06:38:34,441 | INFO | test batches=60 in current window
+2026-05-10 06:38:52,466 | INFO | test window 4: 2025-04-01 -> 2025-04-30
+2026-05-10 06:39:29,810 | INFO | test batches=5 in current window
+2026-05-10 06:39:38,627 | INFO | test batches=10 in current window
+2026-05-10 06:39:56,468 | INFO | test batches=15 in current window
+2026-05-10 06:39:59,376 | INFO | test batches=20 in current window
+2026-05-10 06:40:16,753 | INFO | test batches=25 in current window
+2026-05-10 06:40:28,924 | INFO | test batches=30 in current window
+2026-05-10 06:40:36,259 | INFO | test batches=35 in current window
+2026-05-10 06:40:54,160 | INFO | test batches=40 in current window
+2026-05-10 06:40:56,493 | INFO | test batches=45 in current window
+2026-05-10 06:41:12,206 | INFO | test batches=50 in current window
+2026-05-10 06:41:29,590 | INFO | test batches=55 in current window
+2026-05-10 06:41:32,064 | INFO | test batches=60 in current window
+2026-05-10 06:41:46,991 | INFO | test window 5: 2025-05-01 -> 2025-05-31
+2026-05-10 06:42:24,792 | INFO | test batches=5 in current window
+2026-05-10 06:42:33,403 | INFO | test batches=10 in current window
+2026-05-10 06:42:50,211 | INFO | test batches=15 in current window
+2026-05-10 06:42:52,624 | INFO | test batches=20 in current window
+2026-05-10 06:43:10,259 | INFO | test batches=25 in current window
+2026-05-10 06:43:22,298 | INFO | test batches=30 in current window
+2026-05-10 06:43:29,278 | INFO | test batches=35 in current window
+2026-05-10 06:43:47,047 | INFO | test batches=40 in current window
+2026-05-10 06:43:49,448 | INFO | test batches=45 in current window
+2026-05-10 06:44:06,246 | INFO | test batches=50 in current window
+2026-05-10 06:44:22,831 | INFO | test batches=55 in current window
+2026-05-10 06:44:27,058 | INFO | test batches=60 in current window
+2026-05-10 06:44:45,088 | INFO | test window 6: 2025-06-01 -> 2025-06-30
+2026-05-10 06:45:22,320 | INFO | test batches=5 in current window
+2026-05-10 06:45:30,351 | INFO | test batches=10 in current window
+2026-05-10 06:45:47,067 | INFO | test batches=15 in current window
+2026-05-10 06:45:49,173 | INFO | test batches=20 in current window
+2026-05-10 06:46:06,354 | INFO | test batches=25 in current window
+2026-05-10 06:46:18,423 | INFO | test batches=30 in current window
+2026-05-10 06:46:24,289 | INFO | test batches=35 in current window
+2026-05-10 06:46:41,667 | INFO | test batches=40 in current window
+2026-05-10 06:46:43,981 | INFO | test batches=45 in current window
+2026-05-10 06:46:59,528 | INFO | test batches=50 in current window
+2026-05-10 06:47:16,335 | INFO | test batches=55 in current window
+2026-05-10 06:47:17,752 | INFO | test batches=60 in current window
+2026-05-10 06:47:35,078 | INFO | test window 7: 2025-07-01 -> 2025-07-31
+2026-05-10 06:48:12,981 | INFO | test batches=5 in current window
+2026-05-10 06:48:20,099 | INFO | test batches=10 in current window
+2026-05-10 06:48:36,825 | INFO | test batches=15 in current window
+2026-05-10 06:48:48,971 | INFO | test batches=20 in current window
+2026-05-10 06:48:54,874 | INFO | test batches=25 in current window
+2026-05-10 06:49:10,485 | INFO | test batches=30 in current window
+2026-05-10 06:49:27,179 | INFO | test batches=35 in current window
+2026-05-10 06:49:29,604 | INFO | test batches=40 in current window
+2026-05-10 06:49:44,691 | INFO | test batches=45 in current window
+2026-05-10 06:50:01,076 | INFO | test batches=50 in current window
+2026-05-10 06:50:11,727 | INFO | test batches=55 in current window
+2026-05-10 06:50:20,061 | INFO | test window 8: 2025-08-01 -> 2025-08-31
+2026-05-10 06:50:57,108 | INFO | test batches=5 in current window
+2026-05-10 06:51:04,148 | INFO | test batches=10 in current window
+2026-05-10 06:51:21,602 | INFO | test batches=15 in current window
+2026-05-10 06:51:23,999 | INFO | test batches=20 in current window
+2026-05-10 06:51:39,038 | INFO | test batches=25 in current window
+2026-05-10 06:51:54,533 | INFO | test batches=30 in current window
+2026-05-10 06:52:06,714 | INFO | test batches=35 in current window
+2026-05-10 06:52:11,956 | INFO | test batches=40 in current window
+2026-05-10 06:52:26,643 | INFO | test batches=45 in current window
+2026-05-10 06:52:42,265 | INFO | test batches=50 in current window
+2026-05-10 06:52:44,983 | INFO | test batches=55 in current window
+2026-05-10 06:52:58,924 | INFO | test window 9: 2025-09-01 -> 2025-09-30
+2026-05-10 06:53:36,648 | INFO | test batches=5 in current window
+2026-05-10 06:53:45,998 | INFO | test batches=10 in current window
+2026-05-10 06:54:03,666 | INFO | test batches=15 in current window
+2026-05-10 06:54:06,601 | INFO | test batches=20 in current window
+2026-05-10 06:54:23,579 | INFO | test batches=25 in current window
+2026-05-10 06:54:35,645 | INFO | test batches=30 in current window
+2026-05-10 06:54:42,529 | INFO | test batches=35 in current window
+2026-05-10 06:54:59,469 | INFO | test batches=40 in current window
+2026-05-10 06:55:02,222 | INFO | test batches=45 in current window
+2026-05-10 06:55:17,046 | INFO | test batches=50 in current window
+2026-05-10 06:55:34,860 | INFO | test batches=55 in current window
+2026-05-10 06:55:36,423 | INFO | test batches=60 in current window
+2026-05-10 06:55:52,526 | INFO | test window 10: 2025-10-01 -> 2025-10-31
+2026-05-10 06:56:29,744 | INFO | test batches=5 in current window
+2026-05-10 06:56:39,109 | INFO | test batches=10 in current window
+2026-05-10 06:56:55,827 | INFO | test batches=15 in current window
+2026-05-10 06:56:58,719 | INFO | test batches=20 in current window
+2026-05-10 06:57:16,030 | INFO | test batches=25 in current window
+2026-05-10 06:57:28,129 | INFO | test batches=30 in current window
+2026-05-10 06:57:35,069 | INFO | test batches=35 in current window
+2026-05-10 06:57:53,083 | INFO | test batches=40 in current window
+2026-05-10 06:57:55,788 | INFO | test batches=45 in current window
+2026-05-10 06:58:12,373 | INFO | test batches=50 in current window
+2026-05-10 06:58:29,208 | INFO | test batches=55 in current window
+2026-05-10 06:58:32,497 | INFO | test batches=60 in current window
+2026-05-10 06:58:51,351 | INFO | test window 11: 2025-11-01 -> 2025-11-30
+2026-05-10 06:59:29,285 | INFO | test batches=5 in current window
+2026-05-10 06:59:37,637 | INFO | test batches=10 in current window
+2026-05-10 06:59:54,653 | INFO | test batches=15 in current window
+2026-05-10 06:59:56,894 | INFO | test batches=20 in current window
+2026-05-10 07:00:14,413 | INFO | test batches=25 in current window
+2026-05-10 07:00:26,551 | INFO | test batches=30 in current window
+2026-05-10 07:00:33,103 | INFO | test batches=35 in current window
+2026-05-10 07:00:51,773 | INFO | test batches=40 in current window
+2026-05-10 07:00:54,108 | INFO | test batches=45 in current window
+2026-05-10 07:01:09,981 | INFO | test batches=50 in current window
+2026-05-10 07:01:27,038 | INFO | test batches=55 in current window
+2026-05-10 07:01:29,223 | INFO | test batches=60 in current window
+2026-05-10 07:01:46,340 | INFO | test window 12: 2025-12-01 -> 2025-12-31
+2026-05-10 07:02:24,079 | INFO | test batches=5 in current window
+2026-05-10 07:02:32,091 | INFO | test batches=10 in current window
+2026-05-10 07:02:48,850 | INFO | test batches=15 in current window
+2026-05-10 07:02:50,781 | INFO | test batches=20 in current window
+2026-05-10 07:03:08,006 | INFO | test batches=25 in current window
+2026-05-10 07:03:20,216 | INFO | test batches=30 in current window
+2026-05-10 07:03:26,682 | INFO | test batches=35 in current window
+2026-05-10 07:03:44,067 | INFO | test batches=40 in current window
+2026-05-10 07:03:46,374 | INFO | test batches=45 in current window
+2026-05-10 07:04:01,979 | INFO | test batches=50 in current window
+2026-05-10 07:04:18,824 | INFO | test batches=55 in current window
+2026-05-10 07:04:20,796 | INFO | test batches=60 in current window
+2026-05-10 07:04:38,090 | INFO | Completed test | rows=35,500,578 | rmse=166.0140 | elapsed=2049.1s
+2026-05-10 07:04:38,130 | INFO | Production training finished | model=gradient_boosting | val_rmse=56.4458 | test_rmse=166.0140 | artifact=data/models/nyc_taxi_fare_production.joblib | elapsed=4721.5s
+2026-05-10 07:04:38,151 | INFO | Selected production model: gradient_boosting
+2026-05-10 07:04:38,151 | INFO | Artifact: data/models/nyc_taxi_fare_production.joblib

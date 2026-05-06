@@ -1,12 +1,16 @@
 from pathlib import Path
 
+import joblib
 import pandas as pd
+from pytest import approx as pytest_approx
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import SGDRegressor
 
-from src.models.model_zoo import ModelEntry
+from src.models import experiment_runner
 from src.models import train_model as training_module
+from src.models.training_common import EstimatorSpec
+from src.models import training_common
 from src.utils.config import Settings
 
 
@@ -15,6 +19,7 @@ def synthetic_batches():
     for day in range(1, 31):
         rows.append(
             {
+                "trip_type": "yellow" if day % 2 else "green",
                 "pickup_datetime": f"2025-01-{day:02d} 08:00:00",
                 "passenger_count": 1 + (day % 3),
                 "estimated_distance": 1.0 + day / 10.0,
@@ -28,59 +33,15 @@ def synthetic_batches():
     return pd.DataFrame(rows)
 
 
-def test_train_out_of_core_with_mocked_snowflake(monkeypatch, tmp_path):
-    df = synthetic_batches()
-
-    def fake_fetch_sample(query, sample_pct=None, limit=5000, settings=None):
-        return df.iloc[: min(limit, len(df))].copy()
-
-    def fake_fetch_batches(query, batch_size=50000, settings=None):
-        if "VAL_SET_DEV" in query:
-            yield df.iloc[21:27].copy()
-        elif "TEST_SET_DEV" in query:
-            yield df.iloc[27:].copy()
-        else:
-            yield df.iloc[:21].copy()
-
-    monkeypatch.setattr(training_module, "fetch_sample", fake_fetch_sample)
-    monkeypatch.setattr(training_module, "fetch_data_in_batches", fake_fetch_batches)
-    monkeypatch.setattr(
-        training_module,
-        "available_model_entries",
-        lambda: [
-            ModelEntry(
-                name="dummy_regressor",
-                build_estimator=lambda: DummyRegressor(strategy="mean"),
-                training_strategy="sample",
-                description="dummy",
-                rubric_status="baseline",
-            ),
-            ModelEntry(
-                name="sgd_regressor",
-                build_estimator=lambda: SGDRegressor(random_state=42),
-                training_strategy="incremental",
-                description="sgd",
-                rubric_status="baseline",
-            ),
-            ModelEntry(
-                name="hist_gradient_boosting",
-                build_estimator=lambda: HistGradientBoostingRegressor(random_state=42),
-                training_strategy="sample",
-                description="hgb",
-                rubric_status="recommended",
-            ),
-        ],
-    )
-    monkeypatch.setattr(training_module, "unavailable_required_models", lambda: ["xgboost", "lightgbm"])
-
-    settings = Settings(
+def demo_settings(tmp_path: Path) -> Settings:
+    return Settings(
         snowflake_account="demo",
         snowflake_user="user",
         snowflake_password="password",
         snowflake_role="role",
         snowflake_warehouse="warehouse",
         snowflake_database="database",
-        trip_type="yellow",
+        trip_types=("yellow", "green"),
         snowflake_schema_raw="RAW",
         snowflake_schema_staging="STAGING",
         snowflake_schema_analytics="ANALYTICS",
@@ -107,15 +68,148 @@ def test_train_out_of_core_with_mocked_snowflake(monkeypatch, tmp_path):
         target_column="fare_amount",
     )
 
-    result = training_module.train_out_of_core(settings=settings, sample_limit=12, batch_size=10)
 
-    assert result["selected_model"] in {"dummy_regressor", "sgd_regressor", "hist_gradient_boosting"}
-    assert Path(result["artifact_path"]).exists()
+def install_fake_snowflake(monkeypatch, df: pd.DataFrame) -> None:
+    def fake_fetch_sample(query, sample_pct=None, limit=5000, sample_seed=None, settings=None, use_tablesample=False):
+        return df.iloc[: min(limit, len(df))].copy()
+
+    def fake_fetch_stratified(total_limit=5000, settings=None):
+        return df.iloc[: min(total_limit, len(df))].copy()
+
+    def fake_iter_strata(rows_per_stratum=100, settings=None):
+        # Simula 2 estratos minimos para el path xgb_out_of_core en tests
+        yield 2025, "yellow", df.iloc[:7].copy()
+        yield 2025, "green",  df.iloc[7:14].copy()
+
+    def fake_fetch_batches(query, batch_size=50000, settings=None):
+        if "VAL_SET_DEV" in query:
+            yield df.iloc[21:27].copy()
+        elif "TEST_SET_DEV" in query:
+            yield df.iloc[27:].copy()
+        else:
+            yield df.iloc[:21].copy()
+
+    monkeypatch.setattr(experiment_runner, "fetch_sample", fake_fetch_sample)
+    monkeypatch.setattr(training_module, "fetch_sample", fake_fetch_sample)
+    monkeypatch.setattr(training_module, "fetch_stratified_train_sample", fake_fetch_stratified)
+    monkeypatch.setattr(training_module, "iter_stratified_train_strata", fake_iter_strata)
+    monkeypatch.setattr(training_common, "fetch_data_in_batches", fake_fetch_batches)
+
+
+def test_run_curated_experiment_benchmark_with_mocked_snowflake(monkeypatch, tmp_path):
+    df = synthetic_batches()
+    install_fake_snowflake(monkeypatch, df)
+
+    monkeypatch.setattr(
+        experiment_runner,
+        "recommended_experiment_entries",
+        lambda: [
+            EstimatorSpec(
+                name="dummy_regressor",
+                build_estimator=lambda: DummyRegressor(strategy="mean"),
+                training_strategy="sample",
+                description="dummy",
+                rubric_status="baseline",
+            ),
+            EstimatorSpec(
+                name="sgd_regressor",
+                build_estimator=lambda: SGDRegressor(random_state=42),
+                training_strategy="incremental",
+                description="sgd",
+                rubric_status="baseline",
+            ),
+            EstimatorSpec(
+                name="hist_gradient_boosting",
+                build_estimator=lambda: HistGradientBoostingRegressor(random_state=42),
+                training_strategy="sample",
+                description="hgb",
+                matrix_format="dense",
+                rubric_status="recommended",
+            ),
+        ],
+    )
+
+    benchmark = experiment_runner.run_curated_experiment_benchmark(
+        settings=demo_settings(tmp_path),
+        sample_limit=12,
+        sample_pct=1.0,
+        logger=lambda message: None,
+    )
+
+    assert benchmark["sample_rows"] == 12
+    assert len(benchmark["results"]) == 3
+    assert benchmark["comparison"].iloc[0]["val_rmse"] >= 0
+    assert benchmark["feature_audit"]["feature_contract_version"] == "v4_multi_taxi_year_estimated_distance"
+
+
+def test_train_production_model_with_mocked_snowflake(monkeypatch, tmp_path):
+    df = synthetic_batches()
+    install_fake_snowflake(monkeypatch, df)
+
+    monkeypatch.setattr(
+        training_module,
+        "get_production_model_spec",
+        lambda: EstimatorSpec(
+            name="hist_gradient_boosting",
+            build_estimator=lambda: HistGradientBoostingRegressor(random_state=42),
+            training_strategy="sample",
+            description="prod",
+            matrix_format="dense",
+            rubric_status="production",
+        ),
+    )
+
+    result = training_module.train_production_model(
+        settings=demo_settings(tmp_path),
+        sample_limit=12,
+        batch_size=10,
+    )
+
+    artifact_path = Path(result["artifact_path"])
+    artifact = joblib.load(artifact_path)
+
+    assert result["selected_model"] == "hist_gradient_boosting"
+    assert artifact_path.exists()
     assert result["sample_rows"] == 12
     assert result["batch_size"] == 10
     assert result["training_batch_grain"] == "month"
-    assert result["unavailable_required_models"] == ["xgboost", "lightgbm"]
-    assert len(result["model_results"]) == 3
-    assert all(metric["val_rmse"] >= 0 for metric in result["model_results"])
-    assert result["feature_audit"]["feature_contract_version"] == "v2_estimated_distance"
-    assert result["zone_lookup_enabled"] is False
+    assert artifact["artifact_role"] == "production"
+    assert artifact["input_matrix_format"] == "dense"
+    assert artifact["metrics"]["val_rmse"] >= 0
+    weights = artifact["metrics"]["trip_type_weights"]
+    counts = artifact["metrics"]["trip_type_counts"]
+    assert set(weights) == set(counts)
+    assert all(weight > 0 for weight in weights.values())
+
+
+def test_compute_trip_type_weights_inverse_frequency():
+    series = pd.Series(["yellow"] * 9000 + ["green"] * 1000)
+    weights = training_common.compute_trip_type_weights(series)
+
+    assert set(weights) == {"yellow", "green"}
+    assert weights["green"] == pytest_approx(5.0)
+    assert weights["yellow"] == pytest_approx(10000 / (2 * 9000))
+    weighted_mean = float(series.map(weights).mean())
+    assert weighted_mean == pytest_approx(1.0)
+
+
+def test_compute_trip_type_weights_edge_cases():
+    single = training_common.compute_trip_type_weights(pd.Series(["yellow"] * 50))
+    assert single == {"yellow": 1.0}
+
+    empty = training_common.compute_trip_type_weights(pd.Series([], dtype=str))
+    assert empty == {}
+
+
+def test_trip_type_weights_for_frame_handles_missing_and_normalization():
+    weights = {"yellow": 0.5, "green": 5.0}
+    df = pd.DataFrame({"trip_type": ["yellow", "GREEN", "Yellow", None, "unknown"]})
+    arr = training_common.trip_type_weights_for_frame(df, weights)
+
+    assert arr.tolist() == [0.5, 5.0, 0.5, 1.0, 1.0]
+    assert training_common.trip_type_weights_for_frame(df, None) is None
+    assert training_common.trip_type_weights_for_frame(df, {}) is None
+    assert (
+        training_common.trip_type_weights_for_frame(pd.DataFrame({"other": [1]}), weights)
+        is None
+    )

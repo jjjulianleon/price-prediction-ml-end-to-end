@@ -1,16 +1,16 @@
 """FastAPI service for NYC Taxi fare prediction."""
 from __future__ import annotations
 
-import glob
-import os
 from pathlib import Path
 from typing import Any, Dict
+from typing import Literal
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
 from src.models.predict_model import load_model, predict
+from src.utils.config import get_settings
 
 app = FastAPI(title="NYC Taxi Fare Prediction API", version="2.0")
 
@@ -18,17 +18,18 @@ MODEL: Any = None
 MODEL_NAME: str = "unknown"
 
 
-def _find_latest_model() -> Path | None:
-    model_dir = Path(os.getenv("MODEL_DIR", "data/models"))
-    candidates = list(model_dir.glob("*.joblib"))
-    if not candidates:
-        return None
-    return max(candidates, key=lambda p: p.stat().st_mtime)
+def _find_production_model() -> Path | None:
+    settings = get_settings(validate=False)
+    artifact_path = settings.production_artifact_path
+    if artifact_path.exists():
+        return artifact_path
+    return None
 
 
 class TripInput(BaseModel):
     """Datos de entrada del viaje — sin leakage, sin coordenadas."""
 
+    trip_type: Literal["yellow", "green"] = Field(..., example="yellow")
     pickup_datetime: str = Field(..., example="2025-01-15 14:35:00")
     pickup_location_id: int = Field(..., ge=1, le=265, example=237)
     dropoff_location_id: int = Field(..., ge=1, le=265, example=141)
@@ -40,6 +41,7 @@ class TripInput(BaseModel):
     model_config = {
         "json_schema_extra": {
             "example": {
+                "trip_type": "yellow",
                 "pickup_datetime": "2025-01-15 14:35:00",
                 "pickup_location_id": 237,
                 "dropoff_location_id": 141,
@@ -55,7 +57,7 @@ class TripInput(BaseModel):
 @app.on_event("startup")
 def load_artifacts() -> None:
     global MODEL, MODEL_NAME
-    model_path = _find_latest_model()
+    model_path = _find_production_model()
     if model_path is None:
         return
     try:
@@ -67,7 +69,23 @@ def load_artifacts() -> None:
 
 @app.get("/health")
 def health() -> Dict[str, Any]:
-    return {"status": "ok", "model_loaded": MODEL is not None, "model_name": MODEL_NAME}
+    payload: Dict[str, Any] = {
+        "status": "ok",
+        "model_loaded": MODEL is not None,
+        "model_name": MODEL_NAME,
+    }
+    if isinstance(MODEL, dict):
+        metrics = MODEL.get("metrics", {})
+        payload["val_rmse"]   = round(float(metrics.get("val_rmse", 0)), 4) if metrics.get("val_rmse") else None
+        payload["val_mae"]    = round(float(metrics.get("val_mae", 0)), 4)  if metrics.get("val_mae")  else None
+        payload["val_med_ae"] = round(float(metrics.get("val_med_ae", 0)), 4) if metrics.get("val_med_ae") else None
+        payload["val_r2"]     = round(float(metrics.get("val_r2", 0)), 4)   if metrics.get("val_r2")   else None
+        payload["test_rmse"]  = round(float(metrics.get("test_rmse", 0)), 4) if metrics.get("test_rmse") else None
+        payload["sample_rows"] = metrics.get("sample_rows")
+        payload["training_strategy"] = metrics.get("training_strategy")
+        payload["trip_types"] = metrics.get("trip_types")
+        payload["feature_contract_version"] = MODEL.get("feature_audit", {}).get("feature_contract_version")
+    return payload
 
 
 @app.post("/predict")
@@ -76,6 +94,7 @@ def predict_price(trip: TripInput) -> Dict[str, Any]:
         raise HTTPException(status_code=503, detail="Model not loaded. Run training first.")
 
     payload = trip.model_dump()
+    payload["trip_type"] = str(payload["trip_type"]).lower()
     input_df = pd.DataFrame([payload])
 
     prediction = predict(MODEL, input_df)

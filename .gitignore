@@ -39,3 +39,9 @@ models/*
 
 # Archivos de log
 *.log
+
+# Logs intermedios de entrenamiento (se conserva solo el final)
+training_log_xgboost.txt
+training_log_xgboost_v2.txt
+training_log_xgboost_v3.txt
+training_log_xgboost_v4.txt

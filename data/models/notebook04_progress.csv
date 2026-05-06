@@ -1,0 +1,9 @@
+model,training_strategy,rubric_status,required,matrix_format,sample_rows,val_rmse,test_rmse,feature_contract_version,zone_lookup_enabled,trip_types,trip_type_weights
+lightgbm,sample,recommended,True,sparse,10000,8.528776053100863,9.104382484355025,v3_multi_taxi_estimated_distance,False,"['yellow', 'green']","{'yellow': 0.544603, 'green': 6.105006}"
+gradient_boosting,sample,recommended,True,dense,10000,8.83857804966977,9.684638202539164,v3_multi_taxi_estimated_distance,False,"['yellow', 'green']","{'yellow': 0.544603, 'green': 6.105006}"
+catboost,sample,recommended,True,dense,10000,9.1074042660235,9.45571379004544,v3_multi_taxi_estimated_distance,False,"['yellow', 'green']","{'yellow': 0.544603, 'green': 6.105006}"
+xgboost,sample,recommended,True,sparse,10000,9.2114792349309,9.208858889555843,v3_multi_taxi_estimated_distance,False,"['yellow', 'green']","{'yellow': 0.544603, 'green': 6.105006}"
+hist_gradient_boosting,sample,recommended,False,dense,10000,9.72185294130246,9.7859209449099,v3_multi_taxi_estimated_distance,False,"['yellow', 'green']","{'yellow': 0.544603, 'green': 6.105006}"
+random_forest,sample,recommended,False,sparse,10000,9.722553881537406,9.898396835742552,v3_multi_taxi_estimated_distance,False,"['yellow', 'green']","{'yellow': 0.545197, 'green': 6.031363}"
+dummy_regressor,sample,baseline,False,sparse,10000,19.39548209167144,19.69715672665363,v3_multi_taxi_estimated_distance,False,"['yellow', 'green']","{'yellow': 0.545197, 'green': 6.031363}"
+sgd_regressor,incremental,baseline,False,sparse,10000,367.29930717738597,121.37192135565294,v3_multi_taxi_estimated_distance,False,"['yellow', 'green']","{'yellow': 0.545197, 'green': 6.031363}"

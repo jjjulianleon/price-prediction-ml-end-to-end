@@ -34,7 +34,7 @@ class Settings:
     snowflake_role: str | None
     snowflake_warehouse: str | None
     snowflake_database: str | None
-    trip_type: str
+    trip_types: tuple[str, ...]
     snowflake_schema_raw: str
     snowflake_schema_staging: str
     snowflake_schema_analytics: str
@@ -76,6 +76,10 @@ class Settings:
         return f"{self.snowflake_database}.{self.snowflake_schema_raw}.YELLOW_TRIPS_DEV"
 
     @property
+    def raw_table_green(self) -> str:
+        return f"{self.snowflake_database}.{self.snowflake_schema_raw}.GREEN_TRIPS_DEV"
+
+    @property
     def obt_table(self) -> str:
         return f"{self.snowflake_database}.{self.snowflake_schema_analytics}.OBT_TRIPS_DEV"
 
@@ -106,7 +110,15 @@ class Settings:
         return f"{self.snowflake_database}.{self.snowflake_schema_raw}.NYC_TAXI_STAGE"
 
     @property
+    def raw_stage_green(self) -> str:
+        return f"{self.snowflake_database}.{self.snowflake_schema_raw}.NYC_TAXI_STAGE"
+
+    @property
     def raw_file_format(self) -> str:
+        return f"{self.snowflake_database}.{self.snowflake_schema_raw}.NYC_TAXI_PARQUET"
+
+    @property
+    def raw_file_format_green(self) -> str:
         return f"{self.snowflake_database}.{self.snowflake_schema_raw}.NYC_TAXI_PARQUET"
 
     @property
@@ -114,8 +126,67 @@ class Settings:
         return f"{self.snowflake_database}.{self.snowflake_schema_raw}.RAW_LOAD_AUDIT"
 
     @property
+    def raw_load_audit_table_green(self) -> str:
+        return f"{self.snowflake_database}.{self.snowflake_schema_raw}.RAW_LOAD_AUDIT"
+
+    @property
     def taxi_zone_lookup_table(self) -> str:
         return f"{self.snowflake_database}.{self.snowflake_schema_staging}.TAXI_ZONE_LOOKUP"
+
+    @property
+    def trip_type(self) -> str:
+        return self.trip_types[0]
+
+    @property
+    def trip_type_label(self) -> str:
+        return ",".join(self.trip_types)
+
+    @property
+    def production_artifact_path(self) -> Path:
+        return self.model_dir / "nyc_taxi_fare_production.joblib"
+
+    @property
+    def yellow_enabled(self) -> bool:
+        return "yellow" in self.trip_types
+
+    @property
+    def green_enabled(self) -> bool:
+        return "green" in self.trip_types
+
+    def raw_schema_for_trip_type(self, trip_type: str) -> str:
+        if trip_type == "yellow":
+            return self.snowflake_schema_raw
+        if trip_type == "green":
+            return self.snowflake_schema_raw
+        raise ValueError(f"Unsupported trip type `{trip_type}`.")
+
+    def raw_table_for_trip_type(self, trip_type: str) -> str:
+        if trip_type == "yellow":
+            return self.raw_table
+        if trip_type == "green":
+            return self.raw_table_green
+        raise ValueError(f"Unsupported trip type `{trip_type}`.")
+
+    def raw_stage_for_trip_type(self, trip_type: str) -> str:
+        if trip_type == "yellow":
+            return self.raw_stage
+        if trip_type == "green":
+            return self.raw_stage_green
+        raise ValueError(f"Unsupported trip type `{trip_type}`.")
+
+    def raw_file_format_for_trip_type(self, trip_type: str) -> str:
+        if trip_type == "yellow":
+            return self.raw_file_format
+        if trip_type == "green":
+            return self.raw_file_format_green
+        raise ValueError(f"Unsupported trip type `{trip_type}`.")
+
+    def raw_load_audit_table_for_trip_type(self, trip_type: str) -> str:
+        if trip_type == "yellow":
+            return self.raw_load_audit_table
+        if trip_type == "green":
+            return self.raw_load_audit_table_green
+        raise ValueError(f"Unsupported trip type `{trip_type}`.")
 
 
 def _parse_bool(raw_value: str | None, default: bool) -> bool:
@@ -154,11 +225,17 @@ def _normalize_batch_grain(raw_value: str | None) -> str:
     return grain
 
 
-def _normalize_trip_type(raw_value: str | None) -> str:
-    trip_type = (raw_value or "yellow").strip().lower()
-    if trip_type != "yellow":
-        raise ValueError("TRIP_TYPE must currently be `yellow`.")
-    return trip_type
+def _normalize_trip_types(raw_value: str | None) -> tuple[str, ...]:
+    supported = {"yellow", "green"}
+    normalized = raw_value or "yellow"
+    tokens = [token.strip().lower() for token in normalized.split(",") if token.strip()]
+    if not tokens:
+        tokens = ["yellow"]
+    invalid = sorted(set(tokens).difference(supported))
+    if invalid:
+        raise ValueError("TRIP_TYPE must be `yellow`, `green`, or `yellow,green`.")
+    deduped = tuple(dict.fromkeys(tokens))
+    return deduped
 
 
 def build_settings(load_env_file: bool = True) -> Settings:
@@ -172,7 +249,7 @@ def build_settings(load_env_file: bool = True) -> Settings:
         snowflake_role=_first_env("SNOWFLAKE_ROLE", "SF_ROLE"),
         snowflake_warehouse=_first_env("SNOWFLAKE_WAREHOUSE", "SF_WAREHOUSE"),
         snowflake_database=_first_env("SNOWFLAKE_DATABASE", "SF_DATABASE"),
-        trip_type=_normalize_trip_type(_first_env("TRIP_TYPE", default="yellow")),
+        trip_types=_normalize_trip_types(_first_env("TRIP_TYPE", default="yellow")),
         snowflake_schema_raw=_first_env("SNOWFLAKE_SCHEMA_RAW", "SF_RAW_SCHEMA", default="RAW") or "RAW",
         snowflake_schema_staging=_first_env("SNOWFLAKE_SCHEMA_STAGING", default="STAGING") or "STAGING",
         snowflake_schema_analytics=_first_env(
@@ -295,6 +372,7 @@ def sql_template_context(settings: Settings | None = None) -> dict[str, str]:
     return {
         "DATABASE": effective_settings.snowflake_database or "",
         "RAW_SCHEMA": effective_settings.snowflake_schema_raw,
+        "RAW_SCHEMA_GREEN": effective_settings.snowflake_schema_raw,
         "STAGING_SCHEMA": effective_settings.snowflake_schema_staging,
         "ANALYTICS_SCHEMA": effective_settings.snowflake_schema_analytics,
         "ML_SCHEMA": effective_settings.snowflake_schema_ml,
@@ -302,5 +380,8 @@ def sql_template_context(settings: Settings | None = None) -> dict[str, str]:
         "DATA_END_DATE": effective_settings.data_end_date,
         "TRAIN_END_DATE": effective_settings.train_end_date,
         "VAL_END_DATE": effective_settings.val_end_date,
+        "ENABLE_YELLOW": "TRUE" if effective_settings.yellow_enabled else "FALSE",
+        "ENABLE_GREEN": "TRUE" if effective_settings.green_enabled else "FALSE",
+        "TRIP_TYPES": effective_settings.trip_type_label,
         "ENABLE_ZONE_LOOKUP": "TRUE" if effective_settings.enable_zone_lookup else "FALSE",
     }

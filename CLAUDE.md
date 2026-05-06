@@ -5,15 +5,17 @@
 
 Sistema end-to-end de predicción de tarifas para viajes NYC Yellow Taxi, construido como proyecto final de Data Mining. Toma variables de entrada pre-viaje (sin leakage), entrena múltiples modelos de regresión y sirve predicciones vía API FastAPI + UI Streamlit.
 
-**Core Value:** El usuario ingresa datos de un viaje en la UI y recibe una estimación del `fare_amount` — el sistema debe correr completo de extremo a extremo sin Snowflake para la demo.
+**Core Value:** El usuario ingresa datos de un viaje en la UI y recibe una estimación del `fare_amount`. El sistema corre end-to-end: Snowflake para ingesta/OBT/splits, Python para entrenamiento, FastAPI+Streamlit para serving.
 
 ### Constraints
 
-- **Snowflake**: Sin credenciales activas — modo local obligatorio para poder desarrollar y demostrar
+- **Snowflake**: Credenciales activas en `.env`. Database=`DM_EXP_FINAL_PROJECT`, schemas=`RAW/STAGING/ANALYTICS/ML`. Ventana oficial: train=2015-2023, val=2024, test=2025.
+- **Flotas**: yellow + green. `TRIP_TYPE=yellow,green` activo.
+- **Modelo productivo**: XGBoost (`tree_method=hist`). Muestra masiva estratificada ~5M filas desde Snowflake.
 - **Timeline**: Proyecto académico — entrega inmediata, prioridad sobre elegancia
-- **Rubrica**: Exige modelos boosting (XGBoost, LightGBM) como obligatorios; HistGradientBoosting ya existe
-- **Data**: NYC TLC Yellow Taxi parquet mensual (~400MB por mes, descargable desde CDN oficial)
-- **Anti-leakage**: payment_type, tip_amount, tolls_amount, total_amount nunca deben entrar al modelo
+- **Rubrica**: XGBoost + LightGBM obligatorios como boosting moderno — ambos en shortlist de notebook 04
+- **Data**: NYC TLC parquet mensual (~400MB/mes por flota), descargable desde CDN oficial
+- **Anti-leakage**: payment_type, tip_amount, tolls_amount, total_amount, tpep_dropoff_datetime nunca deben entrar al modelo
 <!-- GSD:project-end -->
 
 <!-- GSD:stack-start source:STACK.md -->

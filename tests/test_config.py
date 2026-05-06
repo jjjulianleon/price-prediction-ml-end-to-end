@@ -46,7 +46,7 @@ def test_get_settings_supports_legacy_spark_env_names(monkeypatch):
     monkeypatch.setenv("SF_ROLE", "ACCOUNTADMIN")
     monkeypatch.setenv("SF_WAREHOUSE", "COMPUTE_WH")
     monkeypatch.setenv("SF_DATABASE", "DM_DB")
-    monkeypatch.setenv("TRIP_TYPE", "yellow")
+    monkeypatch.setenv("TRIP_TYPE", "yellow,green")
     monkeypatch.setenv("SF_RAW_SCHEMA", "RAW_STAGE")
     monkeypatch.setenv("SNOWFLAKE_SCHEMA_STAGING", "STAGING_STAGE")
     monkeypatch.setenv("SF_ANALYTICS_SCHEMA", "ANALYTICS_STAGE")
@@ -75,6 +75,7 @@ def test_get_settings_supports_legacy_spark_env_names(monkeypatch):
     assert settings.snowflake_account == "demo-account"
     assert settings.snowflake_user == "legacy_user"
     assert settings.trip_type == "yellow"
+    assert settings.trip_types == ("yellow", "green")
     assert settings.snowflake_schema_raw == "RAW_STAGE"
     assert settings.snowflake_schema_staging == "STAGING_STAGE"
     assert settings.snowflake_schema_analytics == "ANALYTICS_STAGE"
@@ -143,7 +144,23 @@ def test_get_settings_rejects_invalid_trip_type(monkeypatch):
     monkeypatch.setenv("SNOWFLAKE_ROLE", "role")
     monkeypatch.setenv("SNOWFLAKE_WAREHOUSE", "warehouse")
     monkeypatch.setenv("SNOWFLAKE_DATABASE", "database")
-    monkeypatch.setenv("TRIP_TYPE", "green")
+    monkeypatch.setenv("TRIP_TYPE", "blue")
 
     with pytest.raises(ValueError):
         get_settings(reload=True, load_env_file=False)
+
+
+def test_get_settings_accepts_green_only(monkeypatch):
+    monkeypatch.setenv("SNOWFLAKE_ACCOUNT", "demo-account")
+    monkeypatch.setenv("SNOWFLAKE_USER", "user")
+    monkeypatch.setenv("SNOWFLAKE_PASSWORD", "password")
+    monkeypatch.setenv("SNOWFLAKE_ROLE", "role")
+    monkeypatch.setenv("SNOWFLAKE_WAREHOUSE", "warehouse")
+    monkeypatch.setenv("SNOWFLAKE_DATABASE", "database")
+    monkeypatch.setenv("TRIP_TYPE", "green")
+
+    settings = get_settings(reload=True, load_env_file=False)
+
+    assert settings.trip_types == ("green",)
+    assert settings.green_enabled is True
+    assert settings.yellow_enabled is False
