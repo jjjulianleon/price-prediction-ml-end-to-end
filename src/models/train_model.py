@@ -15,12 +15,14 @@ from src.models.production_model import (
     get_production_model_spec,
 )
 from src.models.training_common import (
+    compute_trip_type_weights,
     evaluate_model,
     fit_preprocessor_from_sample,
     materialize_matrix,
     save_artifact,
     split_ranges,
     train_incremental_snowflake,
+    trip_type_weights_for_frame,
 )
 from src.utils.config import ensure_model_dir, get_settings
 
@@ -104,6 +106,14 @@ def train_production_model(
     X_train, y_train = split_features_target(train_sample)
     model = spec.build_estimator()
 
+    trip_type_counts = train_sample["trip_type"].astype(str).str.lower().value_counts().to_dict()
+    trip_type_weights = compute_trip_type_weights(train_sample["trip_type"])
+    LOGGER.info(
+        "Trip-type imbalance | counts=%s | inverse_frequency_weights=%s",
+        {k: int(v) for k, v in trip_type_counts.items()},
+        {k: round(v, 4) for k, v in trip_type_weights.items()},
+    )
+
     if spec.training_strategy == "incremental":
         LOGGER.info("Training incremental model over Snowflake batches")
         model = train_incremental_snowflake(
@@ -117,12 +127,21 @@ def train_production_model(
             batch_size=effective_batch_size,
             settings=effective_settings,
             log_fn=LOGGER.info,
+            trip_type_weights=trip_type_weights,
         )
     else:
         fit_start = perf_counter()
         X_train_t = materialize_matrix(preprocessor.transform(X_train), spec.matrix_format)
         LOGGER.info("Fit input materialized | shape=%s", getattr(X_train_t, "shape", "unknown"))
-        model.fit(X_train_t, y_train)
+        sample_weights = trip_type_weights_for_frame(train_sample, trip_type_weights)
+        try:
+            model.fit(X_train_t, y_train, sample_weight=sample_weights)
+        except TypeError:
+            LOGGER.warning(
+                "Estimator %s does not accept sample_weight; fitting without trip-type weights.",
+                spec.name,
+            )
+            model.fit(X_train_t, y_train)
         LOGGER.info("Model fit completed | elapsed=%.1fs", perf_counter() - fit_start)
 
     val_rmse = evaluate_model(
@@ -165,6 +184,8 @@ def train_production_model(
         "feature_contract_version": feature_audit["feature_contract_version"],
         "zone_lookup_enabled": effective_settings.enable_zone_lookup,
         "trip_types": list(effective_settings.trip_types),
+        "trip_type_counts": {k: int(v) for k, v in trip_type_counts.items()},
+        "trip_type_weights": {k: round(v, 6) for k, v in trip_type_weights.items()},
     }
 
     artifact_path = save_artifact(

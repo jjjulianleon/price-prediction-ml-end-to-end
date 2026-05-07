@@ -104,6 +104,30 @@ def fit_preprocessor_from_sample(sample_df: pd.DataFrame):
     return pipeline
 
 
+TRIP_TYPE_WEIGHT_COLUMN = "trip_type"
+
+
+def compute_trip_type_weights(trip_type_series: pd.Series) -> dict[str, float]:
+    """Inverse-frequency weights per trip_type, normalized so the mean weight equals 1.0."""
+    counts = trip_type_series.astype(str).str.lower().value_counts()
+    if counts.empty:
+        return {}
+    total = float(counts.sum())
+    n_classes = float(len(counts))
+    return {trip_type: total / (n_classes * float(count)) for trip_type, count in counts.items()}
+
+
+def trip_type_weights_for_frame(
+    df: pd.DataFrame,
+    weight_map: dict[str, float] | None,
+) -> np.ndarray | None:
+    if not weight_map or TRIP_TYPE_WEIGHT_COLUMN not in df.columns:
+        return None
+    series = df[TRIP_TYPE_WEIGHT_COLUMN].astype(str).str.lower()
+    weights = series.map(weight_map).astype(float).fillna(1.0)
+    return weights.to_numpy()
+
+
 def materialize_matrix(matrix, matrix_format: str):
     if matrix_format == "dense" and hasattr(matrix, "toarray"):
         return matrix.toarray()
@@ -122,9 +146,11 @@ def train_incremental_snowflake(
     settings: Settings | None = None,
     log_fn: Callable[[str], None] | None = None,
     log_every_n_batches: int = 5,
+    trip_type_weights: dict[str, float] | None = None,
 ):
     seen_rows = 0
     batch_counter = 0
+    sample_weight_supported = trip_type_weights is not None
     for window_idx, (window_start, window_end) in enumerate(
         iter_date_windows(start_date, end_date, grain),
         start=1,
@@ -141,7 +167,20 @@ def train_incremental_snowflake(
                 continue
             X_batch, y_batch = split_features_target(batch_df)
             X_transformed = materialize_matrix(preprocessor.transform(X_batch), matrix_format)
-            estimator.partial_fit(X_transformed, y_batch)
+            batch_weights = trip_type_weights_for_frame(batch_df, trip_type_weights)
+            if sample_weight_supported and batch_weights is not None:
+                try:
+                    estimator.partial_fit(X_transformed, y_batch, sample_weight=batch_weights)
+                except TypeError:
+                    sample_weight_supported = False
+                    if log_fn:
+                        log_fn(
+                            "Estimator partial_fit does not accept sample_weight; "
+                            "falling back to unweighted incremental training."
+                        )
+                    estimator.partial_fit(X_transformed, y_batch)
+            else:
+                estimator.partial_fit(X_transformed, y_batch)
             seen_rows += len(batch_df)
             batch_counter += 1
             if log_fn and batch_counter % log_every_n_batches == 0:

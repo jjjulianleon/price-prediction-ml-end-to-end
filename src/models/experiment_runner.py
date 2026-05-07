@@ -12,11 +12,13 @@ from src.features.build_features import get_feature_audit_payload, split_feature
 from src.models.model_zoo import recommended_experiment_entries
 from src.models.training_common import (
     EstimatorSpec,
+    compute_trip_type_weights,
     evaluate_model,
     fit_preprocessor_from_sample,
     materialize_matrix,
     split_ranges,
     train_incremental_snowflake,
+    trip_type_weights_for_frame,
 )
 from src.utils.config import Settings, get_settings
 
@@ -49,6 +51,8 @@ def prepare_experiment_context(
     preprocessor = fit_preprocessor_from_sample(train_sample)
     X_train_sample_raw, y_train_sample = split_features_target(train_sample)
     X_train_sample_t = preprocessor.transform(X_train_sample_raw)
+    trip_type_weights = compute_trip_type_weights(train_sample["trip_type"])
+    train_sample_weights = trip_type_weights_for_frame(train_sample, trip_type_weights)
 
     return {
         "settings": effective_settings,
@@ -59,6 +63,8 @@ def prepare_experiment_context(
         "X_train_sample_t": X_train_sample_t,
         "preprocessor": preprocessor,
         "feature_audit": get_feature_audit_payload(),
+        "trip_type_weights": trip_type_weights,
+        "train_sample_weights": train_sample_weights,
     }
 
 
@@ -79,6 +85,8 @@ def run_single_experiment(
     feature_audit = context["feature_audit"]
 
     model = entry.build_estimator()
+    trip_type_weights = context.get("trip_type_weights")
+    train_sample_weights = context.get("train_sample_weights")
     log(f"=== Entrenando modelo: {entry.name} ===")
 
     if entry.training_strategy == "incremental":
@@ -92,11 +100,16 @@ def run_single_experiment(
             matrix_format=entry.matrix_format,
             batch_size=min(settings.batch_size, 50_000),
             settings=settings,
+            trip_type_weights=trip_type_weights,
         )
     else:
         X_fit = materialize_matrix(X_train_sample_t, entry.matrix_format)
         log(f"Fit input for {entry.name}: shape={X_fit.shape}")
-        model.fit(X_fit, y_train_sample)
+        try:
+            model.fit(X_fit, y_train_sample, sample_weight=train_sample_weights)
+        except TypeError:
+            log(f"Estimator {entry.name} does not accept sample_weight; fitting unweighted.")
+            model.fit(X_fit, y_train_sample)
 
     eval_batch_size = dense_eval_batch_size if entry.matrix_format == "dense" else sparse_eval_batch_size
     val_rmse = evaluate_model(
@@ -134,6 +147,9 @@ def run_single_experiment(
         "feature_contract_version": feature_audit["feature_contract_version"],
         "zone_lookup_enabled": settings.enable_zone_lookup,
         "trip_types": list(settings.trip_types),
+        "trip_type_weights": {
+            k: round(v, 6) for k, v in (trip_type_weights or {}).items()
+        },
     }
     log(f"{entry.name} listo | val_rmse={val_rmse:.4f} | test_rmse={test_rmse:.4f}")
     return model, metrics

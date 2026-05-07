@@ -2,6 +2,7 @@ from pathlib import Path
 
 import joblib
 import pandas as pd
+from pytest import approx as pytest_approx
 from sklearn.dummy import DummyRegressor
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.linear_model import SGDRegressor
@@ -165,3 +166,40 @@ def test_train_production_model_with_mocked_snowflake(monkeypatch, tmp_path):
     assert artifact["artifact_role"] == "production"
     assert artifact["input_matrix_format"] == "dense"
     assert artifact["metrics"]["val_rmse"] >= 0
+    weights = artifact["metrics"]["trip_type_weights"]
+    counts = artifact["metrics"]["trip_type_counts"]
+    assert set(weights) == set(counts)
+    assert all(weight > 0 for weight in weights.values())
+
+
+def test_compute_trip_type_weights_inverse_frequency():
+    series = pd.Series(["yellow"] * 9000 + ["green"] * 1000)
+    weights = training_common.compute_trip_type_weights(series)
+
+    assert set(weights) == {"yellow", "green"}
+    assert weights["green"] == pytest_approx(5.0)
+    assert weights["yellow"] == pytest_approx(10000 / (2 * 9000))
+    weighted_mean = float(series.map(weights).mean())
+    assert weighted_mean == pytest_approx(1.0)
+
+
+def test_compute_trip_type_weights_edge_cases():
+    single = training_common.compute_trip_type_weights(pd.Series(["yellow"] * 50))
+    assert single == {"yellow": 1.0}
+
+    empty = training_common.compute_trip_type_weights(pd.Series([], dtype=str))
+    assert empty == {}
+
+
+def test_trip_type_weights_for_frame_handles_missing_and_normalization():
+    weights = {"yellow": 0.5, "green": 5.0}
+    df = pd.DataFrame({"trip_type": ["yellow", "GREEN", "Yellow", None, "unknown"]})
+    arr = training_common.trip_type_weights_for_frame(df, weights)
+
+    assert arr.tolist() == [0.5, 5.0, 0.5, 1.0, 1.0]
+    assert training_common.trip_type_weights_for_frame(df, None) is None
+    assert training_common.trip_type_weights_for_frame(df, {}) is None
+    assert (
+        training_common.trip_type_weights_for_frame(pd.DataFrame({"other": [1]}), weights)
+        is None
+    )
